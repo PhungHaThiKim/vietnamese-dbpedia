@@ -6,7 +6,6 @@ from fastapi import APIRouter
 
 from ui.api import presets, serialize
 from ui.api.state import kg
-from vidbpedia.web.resource_tree import ROOT_ORDER
 
 router = APIRouter(prefix="/api")
 
@@ -34,7 +33,8 @@ def _stats() -> dict:
 
 
 def _by_class() -> list[dict]:
-    """Cây lớp vio: theo thứ tự duyệt cây (cha trước con, anh em theo nhãn), mỗi lớp một dòng phẳng."""
+    """Cây lớp vio: theo thứ tự duyệt cây (cha trước con, anh em theo nhãn), mỗi lớp một dòng phẳng; lớp cha dbo:
+    ghi kèm (gốc ghi cả chuỗi, ví dụ vio:Person ⊑ dbo:Person ⊑ dbo:Animal), cùng cây với trang Ontology."""
     tree, view = kg.tree, kg.view
     out = []
 
@@ -44,7 +44,7 @@ def _by_class() -> list[dict]:
                 "id": view.qname(c),
                 "label": view.label(c),
                 "parent": view.qname(tree.parent[c]) if tree.parent[c] is not None else None,
-                "dbo": [view.qname(d) for d in tree.dbo[c]],
+                **serialize.dbo_parents(tree, c),
                 "total": len(tree.members[c]),
                 "asserted": tree.asserted[c],
                 "direct": len(tree.direct[c]),
@@ -53,9 +53,7 @@ def _by_class() -> list[dict]:
         for child in sorted(tree.children[c], key=tree.label):
             visit(child)
 
-    roots = [c for c in ROOT_ORDER if c in tree.parent and tree.parent[c] is None]
-    roots += [c for c in tree.classes if tree.parent[c] is None and c not in roots]
-    for r in roots:
+    for r in tree.roots:
         visit(r)
     return out
 

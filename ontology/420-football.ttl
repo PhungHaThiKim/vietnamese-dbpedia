@@ -7,30 +7,36 @@
 
 # ===== Câu lạc bộ bóng đá =====
 vio:ground a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "sân nhà"@vi , "ground"@en ;
   rdfs:comment "Sân nhà hiện tại (Wikidata P115, infobox CLB). Domain là Organisation (không phải FootballClub) vì đội tuyển quốc gia cũng có sân nhà; với domain FootballClub, đội tuyển bị suy ra là CLB và vi phạm owl:AllDisjointClasses."@vi ;
   rdfs:domain vio:Organisation ; rdfs:range vio:Stadium ;
   rdfs:subPropertyOf dbo:ground .
 
 vio:league a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "giải đấu"@vi , "league"@en ;
   rdfs:domain vio:FootballClub ;
   rdfs:subPropertyOf dbo:league .
 
 vio:nickname a owl:DatatypeProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "biệt danh"@vi , "nickname"@en ;
   rdfs:range rdf:langString .
 
 vio:manager a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "huấn luyện viên trưởng"@vi , "manager"@en ;
   rdfs:domain vio:Organisation ; rdfs:range vio:Person ;
   rdfs:subPropertyOf dbo:manager .
 
 vio:managerName a owl:DatatypeProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "tên huấn luyện viên trưởng"@vi , "manager name"@en ;
   rdfs:domain vio:Organisation ; rdfs:range xsd:string .
 
 vio:chairman a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "chủ tịch"@vi , "chairman"@en ;
   rdfs:domain vio:Organisation ; rdfs:range vio:Person ;
   rdfs:subPropertyOf dbo:chairman .

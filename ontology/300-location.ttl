@@ -10,79 +10,95 @@
 # ===== Vị trí: dùng chung cho mọi lớp có toạ độ / địa điểm, nên KHÔNG đặt domain =====
 # (đặt domain vio:Location sẽ khiến trường đại học, CLB bị suy ra là địa điểm — anti-pattern Exclusivity, slide 07)
 vio:latitude a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "vĩ độ"@vi , "latitude"@en ;
   rdfs:range xsd:float ;
   rdfs:subPropertyOf wgs84:lat .
 
 vio:longitude a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "kinh độ"@vi , "longitude"@en ;
   rdfs:range xsd:float ;
   rdfs:subPropertyOf wgs84:long .
 
 vio:country a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "quốc gia"@vi , "country"@en ;
   rdfs:range vio:Country ;
   rdfs:subPropertyOf dbo:country .
 
 vio:locatedIn a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "nằm ở"@vi , "located in"@en ;
   rdfs:range vio:Location ;
   rdfs:subPropertyOf dbo:location , schema:location .
 
 vio:province a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "thuộc tỉnh"@vi , "province"@en ;
   rdfs:comment "Địa điểm quy về cấp tỉnh qua chuỗi Wikidata P131*."@vi ;
   rdfs:range vio:Province ;
   rdfs:subPropertyOf vio:locatedIn .
 
 vio:isPartOf a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "thuộc"@vi , "is part of"@en ;
   rdfs:domain vio:Location ; rdfs:range vio:Location ;
   rdfs:subPropertyOf dbo:isPartOf .
 
 vio:hasPart a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "gồm"@vi , "has part"@en ;
   owl:inverseOf vio:isPartOf .
 
 # ===== Tỉnh và quốc gia =====
 vio:population a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "dân số"@vi , "population"@en ;
   rdfs:domain vio:Location ; rdfs:range xsd:nonNegativeInteger ;
   rdfs:subPropertyOf dbo:populationTotal .
 
 vio:populationYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm số liệu dân số"@vi , "population as of"@en ;
   rdfs:comment "Thời điểm của số liệu dân số (Wikidata P585), để tránh cộng dân số các năm khác nhau."@vi ;
   rdfs:domain vio:Location ; rdfs:range xsd:gYear .
 
 vio:area a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "diện tích (km²)"@vi , "area (km²)"@en ;
   rdfs:comment "Đơn vị km²; không ánh xạ sang dbo:areaTotal vì DBpedia dùng m²."@vi ;
   rdfs:domain vio:Location ; rdfs:range xsd:double .
 
 vio:dissolutionYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm giải thể"@vi , "dissolution year"@en ;
   rdfs:range xsd:gYear ;
   rdfs:subPropertyOf dbo:dissolutionYear .
 
 vio:successor a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "đơn vị kế tục"@vi , "successor"@en ;
   rdfs:subPropertyOf dbo:successor .
 
 vio:predecessor a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "đơn vị tiền thân"@vi , "predecessor"@en ;
   owl:inverseOf vio:successor ;
   rdfs:subPropertyOf dbo:predecessor .
 
 vio:capital a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "tỉnh lỵ / thủ đô"@vi , "capital"@en ;
   rdfs:domain vio:Location ;
   rdfs:subPropertyOf dbo:capital .
 
 vio:region a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "vùng"@vi , "region"@en ;
   rdfs:subPropertyOf dbo:region .
 
 vio:administrativeCode a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "mã hành chính"@vi , "administrative code"@en ;
   rdfs:domain vio:Province ; rdfs:range xsd:string .

@@ -1,8 +1,8 @@
 {
-  "total_triples": 131233,
+  "total_triples": 131543,
   "asserted_triples": 88898,
   "inferred_triples": 41730,
-  "ontology_triples": 549,
+  "ontology_triples": 859,
   "entities": 990,
   "entities_by_class": {
     "Country": 1,
@@ -21,10 +21,10 @@
     "vi"
   ],
   "reasoner": "owlrl",
-  "reasoning_seconds": 117.4,
+  "reasoning_seconds": 35.3,
   "validation": {
     "errors": 0,
     "warnings": 0
   },
-  "built": "2026-10-07"
+  "built": "2026-10-10"
 }

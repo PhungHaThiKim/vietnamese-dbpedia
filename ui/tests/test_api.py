@@ -34,6 +34,10 @@ def test_overview_classes_and_inference(client):
     d = client.get("/api/overview").json()
     by_class = {c["id"]: c for c in d["byClass"]}
     assert len(by_class) == 18
+    person = by_class["vio:Person"]
+    assert d["byClass"][0]["id"] == "vio:Person" and person["parent"] is None
+    # chuỗi lớp cha DBpedia của gốc
+    assert person["dbo"] == ["dbo:Person"] and person["dboUp"] == ["dbo:Animal"]
     assert by_class["vio:FootballPlayer"]["parent"] == "vio:Athlete"
     assert by_class["vio:Athlete"]["asserted"] == 0  # chỉ có nhờ suy luận
     # cha luôn đứng trước con để frontend dựng cây thụt lề chỉ bằng một lượt duyệt

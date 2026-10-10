@@ -7,65 +7,78 @@
 
 # ===== Cầu thủ bóng đá =====
 vio:position a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "vị trí"@vi , "position"@en ;
   rdfs:domain vio:FootballPlayer ;
   rdfs:subPropertyOf dbo:position .
 
 vio:height a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "chiều cao (m)"@vi , "height (m)"@en ;
   rdfs:domain vio:Person ; rdfs:range xsd:double ;
   rdfs:subPropertyOf dbo:height .
 
 vio:shirtNumber a owl:DatatypeProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "số áo"@vi , "shirt number"@en ;
   rdfs:domain vio:FootballPlayer ; rdfs:range xsd:nonNegativeInteger ;
   rdfs:subPropertyOf dbo:number .
 
 vio:currentClub a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "câu lạc bộ hiện tại"@vi , "current club"@en ;
   rdfs:domain vio:FootballPlayer ; rdfs:range vio:FootballClub ;
   rdfs:subPropertyOf dbo:team .
 
 # ===== Quá trình thi đấu: cầu thủ → CareerStation → đội =====
 vio:careerStation a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "giai đoạn thi đấu"@vi , "career station"@en ;
   rdfs:domain vio:FootballPlayer ; rdfs:range vio:CareerStation ;
   rdfs:subPropertyOf dbo:careerStation .
 
 vio:team a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "đội"@vi , "team"@en ;
   rdfs:comment "Đội của một giai đoạn thi đấu. Không đặt range chung; ràng buộc theo từng loại giai đoạn bên dưới."@vi ;
   rdfs:domain vio:CareerStation ;
   rdfs:subPropertyOf dbo:team .
 
 vio:startYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm bắt đầu"@vi , "start year"@en ;
   rdfs:domain vio:CareerStation ; rdfs:range xsd:gYear .
 
 vio:endYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm kết thúc"@vi , "end year"@en ;
   rdfs:domain vio:CareerStation ; rdfs:range xsd:gYear .
 
 vio:appearances a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "số trận"@vi , "appearances"@en ;
   rdfs:domain vio:CareerStation ; rdfs:range xsd:nonNegativeInteger ;
   rdfs:subPropertyOf dbo:numberOfMatches .
 
 vio:goals a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "số bàn thắng"@vi , "goals"@en ;
   rdfs:domain vio:CareerStation ; rdfs:range xsd:nonNegativeInteger ;
   rdfs:subPropertyOf dbo:numberOfGoals .
 
 vio:onLoan a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "cho mượn"@vi , "on loan"@en ;
   rdfs:domain vio:CareerStation ; rdfs:range xsd:boolean .
 
 # Tắt đường đi "cầu thủ → giai đoạn → đội" thành một cạnh (slide 06: property chain)
 vio:playedFor a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "từng thi đấu cho"@vi , "played for"@en ;
   owl:propertyChainAxiom ( vio:careerStation vio:team ) .
 
 vio:hasPlayer a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "có cầu thủ"@vi , "has player"@en ;
   owl:inverseOf vio:playedFor .
 
@@ -74,6 +87,10 @@ vio:ClubStation rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vio:team ; 
 vio:YouthStation rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vio:team ; owl:allValuesFrom vio:FootballClub ] .
 vio:NationalTeamStation rdfs:subClassOf [ a owl:Restriction ; owl:onProperty vio:team ; owl:allValuesFrom vio:NationalFootballTeam ] .
 
-# Ai có giai đoạn ở đội tuyển quốc gia là NationalTeamPlayer
-[ a owl:Restriction ; owl:onProperty vio:careerStation ; owl:someValuesFrom vio:NationalTeamStation ]
+# Cầu thủ có giai đoạn ở đội tuyển quốc gia là NationalTeamPlayer.
+# Viết dạng giao FootballPlayer ⊓ ∃careerStation.NationalTeamStation, như lời giải anti-pattern Exclusivity
+# ở slide 07 (CoastalCity = City ⊓ ∃bordering.Ocean): định nghĩa lớp tự đủ, không dựa vào domain của
+# vio:careerStation. OWL 2 RL chỉ cho biểu thức này ở vế trái của subClassOf (slide 06: profile RL).
+[ owl:intersectionOf ( vio:FootballPlayer
+                       [ a owl:Restriction ; owl:onProperty vio:careerStation ; owl:someValuesFrom vio:NationalTeamStation ] ) ]
   rdfs:subClassOf vio:NationalTeamPlayer .

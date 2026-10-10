@@ -1,6 +1,15 @@
 import { useEffect, useMemo, useState } from "react";
 import { Link, useLocation, useSearchParams } from "react-router-dom";
-import type { Ontology, OntologyClass, OntologyProperty, ResourceTree, TreeClass, TreeGroup, TreeItem } from "../api/types";
+import type {
+  DboParents,
+  Ontology,
+  OntologyClass,
+  OntologyProperty,
+  ResourceTree,
+  TreeClass,
+  TreeGroup,
+  TreeItem,
+} from "../api/types";
 import { useApi, type ApiState } from "../api/useApi";
 import { IriTip } from "../components/IriTip";
 import { ErrorState, Loading } from "../components/States";
@@ -36,6 +45,48 @@ function TermLink({ id, term }: { id: string; term: string }) {
         <code>{id}</code>
       </a>
     </IriTip>
+  );
+}
+
+/** Lớp DBpedia (dbo:Animal…): mở trang lớp trên dbpedia.org trong tab mới; rê chuột thấy nhãn @vi ("Động vật") và IRI. */
+function DboLink({ id, label }: { id: string; label?: string }) {
+  const iri = `${DBO_NS}${id.replace(/^dbo:/, "")}`;
+  const tip = label ? `${label} · ${iri}` : iri;
+  return (
+    <IriTip iri={tip}>
+      <a href={iri} target="_blank" rel="noopener noreferrer" title={tip}>
+        <code>{id}</code> ↗
+      </a>
+    </IriTip>
+  );
+}
+
+/**
+ * Lớp cha DBpedia ghi sau dấu ⊑, không thành nút: cây chỉ vẽ được một cha (slide 03, đa kế thừa) nên cạnh của cây
+ * chỉ nối lớp vio:. Gốc ghi cả chuỗi (vio:Person ⊑ dbo:Person ⊑ dbo:Animal); cuối có một nhãn DBpedia cho cả nhóm.
+ */
+function DboChain({ c }: { c: DboParents }) {
+  if (c.dbo.length === 0) return null;
+  return (
+    <span className="ct-muted">
+      {" "}
+      ⊑{" "}
+      {c.dbo.map((d, i) => (
+        <span key={d}>
+          {i > 0 && ", "}
+          <DboLink id={d} label={c.dboLabels[d]} />
+        </span>
+      ))}
+      {c.dboUp.map((d) => (
+        <span key={d}>
+          {" "}
+          ⊑ <DboLink id={d} label={c.dboLabels[d]} />
+        </span>
+      ))}{" "}
+      <span className="ct-ext" title="Lớp do DBpedia định nghĩa (rdfs:isDefinedBy dbo:); nhóm chỉ thêm nhãn tiếng Việt">
+        DBpedia
+      </span>
+    </span>
   );
 }
 
@@ -109,25 +160,7 @@ function ClassNode({ c, children, filtering, ancestors, target, ctl }: ClassNode
         {expandable ? <Chevron open={open} onToggle={onToggle} /> : <LeafMark />}
         <span className="ct-text">
           <b>{c.label}</b> <TermLink id={c.id} term={c.term} />
-          {c.dbo.length > 0 && (
-            <span className="ct-muted">
-              {" "}
-              ⊑{" "}
-              {c.dbo.map((d, i) => {
-                const iri = `${DBO_NS}${d.replace(/^dbo:/, "")}`;
-                return (
-                  <span key={d}>
-                    {i > 0 && ", "}
-                    <IriTip iri={iri}>
-                      <a href={iri} target="_blank" rel="noopener noreferrer" title={iri}>
-                        <code>{d}</code> ↗
-                      </a>
-                    </IriTip>
-                  </span>
-                );
-              })}
-            </span>
-          )}{" "}
+          <DboChain c={c} />{" "}
           <span className="ct-count">{formatNumber(c.total)}</span>
           {inferredOnly ? (
             <>
@@ -236,7 +269,8 @@ function Tree({ data, target }: { data: ResourceTree; target: string }) {
   return (
     <>
       <p className="ct-sum">
-        {formatNumber(data.summary.classes)} lớp <code>vio:</code> · {formatNumber(data.summary.resources)} tài nguyên <code>vres:</code>. Số bên cạnh
+        {formatNumber(data.summary.classes)} lớp <code>vio:</code>, lớp cha DBpedia (<code>dbo:</code>) ghi sau dấu ⊑ ·{" "}
+        {formatNumber(data.summary.resources)} tài nguyên <code>vres:</code>. Số bên cạnh
         lớp là số thực thể của lớp và các lớp con (gồm cả thực thể có lớp nhờ suy luận); danh sách tên chỉ gồm thực thể <b>trực tiếp</b> của lớp
         đó.
       </p>
@@ -308,7 +342,7 @@ function ClassProperties({ c, anchors, target }: { c: OntologyClass; anchors: Ma
       <div className="onto-class-head">
         <strong>{c.label}</strong>
         <TermLink id={c.id} term={c.term} />
-        {c.dbo.length > 0 && <span className="onto-sub">⊑ {c.dbo.join(", ")}</span>}
+        {c.dbo.length > 0 && <span className="onto-sub">⊑ {[c.dbo.join(", "), ...c.dboUp].join(" ⊑ ")}</span>}
         <span className="onto-count" title={`${formatNumber(c.asserted)} thực thể khai báo · ${formatNumber(c.total)} sau suy luận`}>
           {formatNumber(c.asserted)} / {inferred > 0 ? <span className="onto-inferred">{formatNumber(c.total)}</span> : formatNumber(c.total)}
         </span>
@@ -507,7 +541,8 @@ export function OntologyPage() {
     <div className="ontology">
       <h1 className="page-title">Cây tài nguyên</h1>
       <p className="muted lead">
-        Duyệt mọi tài nguyên <code>vres:</code> theo cây lớp <code>vio:</code> (mỗi lớp ⊑ một lớp <code>dbo:</code>). Bấm tên để mở trang thực thể.
+        Duyệt mọi tài nguyên <code>vres:</code> theo cây lớp <code>vio:</code>; mỗi lớp ghi lớp cha DBpedia sau dấu ⊑, gốc ghi cả
+        chuỗi (<code>vio:Person ⊑ dbo:Person ⊑ dbo:Animal</code>). Bấm tên để mở trang thực thể.
       </p>
 
       <div className="onto-layout">

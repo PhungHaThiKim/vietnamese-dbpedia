@@ -12,6 +12,11 @@ def test_tree_matches_resource_tree(client):
     assert [c["id"] for c in d["classes"]][:2] == ["vio:Person", "vio:Athlete"]
     assert len(d["classes"]) == 18 and d["classes"][0]["depth"] == 0 and d["classes"][1]["depth"] == 1
     person = d["classes"][0]
+    # lớp cha DBpedia ghi kèm, không thành nút; gốc có cả chuỗi và nhãn @vi để hiện khi rê chuột
+    assert person["parent"] is None and person["dbo"] == ["dbo:Person"] and person["dboUp"] == ["dbo:Animal"]
+    assert person["dboLabels"] == {"dbo:Person": "Người", "dbo:Animal": "Động vật"}
+    athlete = d["classes"][1]
+    assert athlete["dbo"] == ["dbo:Athlete"] and athlete["dboUp"] == []
     assert person["total"] == len(tree.members[_vio(tree, "Person")])
     assert person["asserted"] == 0 and person["directTotal"] == len(tree.direct[_vio(tree, "Person")])
     assert person["directShown"] == min(person["directTotal"], MAX_LIST)

@@ -86,6 +86,7 @@ button[role="tab"][aria-selected="true"] { color: var(--jade) !important; backgr
 .rv-badge { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; padding: 0 6px; border-radius: 99px;
   background: var(--jade-soft); color: var(--jade); white-space: nowrap; }
 .rv-badge.rv-inf { background: #fbefdc; color: #a35f00; }
+.rv-badge.rv-ext { background: transparent; color: var(--muted); border: 1px solid var(--line); }
 .rv-tree ul { padding-left: 16px !important; border-left: 1px solid var(--line); margin-left: 6px !important; }
 .rv-tree li { padding: 2px 0 2px 8px !important; font-size: 12.5px; }
 .rv-card { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; font-size: 13px; }

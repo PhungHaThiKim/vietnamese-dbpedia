@@ -57,7 +57,8 @@ def note(text):
 def tree_tab(tree):
     with gr.Tab("Cây tài nguyên", id="tree"):
         note(
-            "Duyệt mọi tài nguyên `vres:` theo cây lớp `vio:` (mỗi lớp ⊑ một lớp `dbo:`). Xem chi tiết ở tab Tài nguyên."
+            "Duyệt mọi tài nguyên `vres:` theo cây lớp `vio:`; mỗi lớp ghi lớp cha DBpedia sau dấu ⊑, gốc ghi cả chuỗi "
+            "(`vio:Person ⊑ dbo:Person ⊑ dbo:Animal`). Xem chi tiết ở tab Tài nguyên."
         )
         query = gr.Textbox(label="Lọc theo tên", placeholder="ví dụ: hoàng anh, hoang anh")
         html = gr.HTML(tree.full, elem_classes=["vd-flush"])

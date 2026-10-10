@@ -20,7 +20,7 @@ ngôn ngữ tự nhiên (KG-RAG).
 
 | | |
 |---|---|
-| Triple | **131.233** = 88.898 khai báo + 41.730 suy luận + 549 ontology (+ VoID) |
+| Triple | **131.543** = 88.898 khai báo + 41.730 suy luận + 859 ontology (+ VoID) |
 | Thực thể | **990**: 611 cầu thủ, 61 câu lạc bộ, 10 đội tuyển quốc gia, 29 sân vận động, 168 trường đại học, 110 tỉnh (34 hiện hành + 76 đã giải thể/sáp nhập), 1 quốc gia |
 | Quá trình thi đấu | 3.382 `CareerStation` của 601 cầu thủ |
 | `owl:sameAs` | 777 → DBpedia EN, 990 → Wikidata |
@@ -79,7 +79,7 @@ python -m vidbpedia enrich          # --offline, --refresh
 python -m vidbpedia ontology        # ghép ontology/*.ttl → vi-ontology.ttl
 python -m vidbpedia build
 python -m vidbpedia postprocess --strict   # --no-reason, --reasoner rdfs, --rdfxml: xuất thêm .rdf
-pytest                              # 58 test, khoảng 25 giây
+pytest                              # 62 test, khoảng 25 giây (thêm `pytest ui/tests` cho giao diện ui/)
 ```
 
 Docker: `docker compose up --build` (cổng 7860; Virtuoso tuỳ chọn ở cổng 8890).
@@ -90,7 +90,7 @@ Docker: `docker compose up --build` (cổng 7860; Virtuoso tuỳ chọn ở cổ
 
 | Tab | Chức năng |
 |---|---|
-| **Cây tài nguyên** (mặc định) | Duyệt 8.624 tài nguyên theo cây lớp `vio:`, chỉ hiện tên, có ô lọc |
+| **Cây tài nguyên** (mặc định) | Duyệt 8.624 tài nguyên theo cây lớp `vio:`; lớp cha DBpedia ghi sau dấu ⊑, gốc ghi cả chuỗi (`vio:Person ⊑ dbo:Person ⊑ dbo:Animal`); chỉ hiện tên, có ô lọc |
 | **Tài nguyên** | Trang thực thể kiểu `dbpedia.org/page/…`: abstract, ảnh, liên kết LOD, cây phân lớp, đồ thị lân cận, cây quan hệ, bảng thuộc tính. Tìm thực thể không cần gõ dấu. |
 | **Hỏi đáp** | Hỏi bằng tiếng Việt; LLM sinh SPARQL, chạy trên graph rồi trả lời; có SPARQL mode |
 | **SPARQL** | Soạn và chạy truy vấn SPARQL 1.1, có 9 truy vấn mẫu, xuất bảng / JSON / CSV |

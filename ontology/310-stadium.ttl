@@ -7,24 +7,29 @@
 
 # ===== Sân vận động =====
 vio:capacity a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "sức chứa"@vi , "capacity"@en ;
   rdfs:domain vio:Stadium ; rdfs:range xsd:nonNegativeInteger ;
   rdfs:subPropertyOf dbo:seatingCapacity .
 
 vio:openingYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm khánh thành"@vi , "opening year"@en ;
   rdfs:domain vio:Stadium ; rdfs:range xsd:gYear ;
   rdfs:subPropertyOf dbo:openingYear .
 
 vio:owner a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "chủ sở hữu"@vi , "owner"@en ;
   rdfs:subPropertyOf dbo:owner .
 
 vio:operator a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "đơn vị vận hành"@vi , "operator"@en ;
   rdfs:subPropertyOf dbo:operator .
 
 vio:tenant a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "đội thuê sân"@vi , "tenant"@en ;
   rdfs:comment "Mọi đội từng dùng sân, kể cả tạm thời (ô bên thuê của infobox, Wikidata P466). Không khai báo owl:inverseOf vio:ground (DBpedia cũng tách dbo:tenant và dbo:ground): nếu khai báo, mọi đội từng thuê Hàng Đẫy sẽ bị suy ra có sân nhà ở Hà Nội."@vi ;
   rdfs:domain vio:Stadium ;

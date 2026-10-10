@@ -288,6 +288,17 @@ code {
   color: var(--muted);
   font-size: 11px;
 }
+/* nhãn "DBpedia" sau nhóm lớp cha "⊑ dbo:…": lớp do DBpedia định nghĩa (rdfs:isDefinedBy dbo:) */
+.ct-ext,
+.cb-ext {
+  padding: 0 6px;
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--muted);
+  border: 1px solid var(--border);
+  border-radius: 99px;
+  white-space: nowrap;
+}
 .cb-sub {
   display: block;
   font-size: 11px;

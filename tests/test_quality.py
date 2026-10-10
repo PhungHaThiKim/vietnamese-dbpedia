@@ -4,10 +4,11 @@ import json
 import os
 
 from rdflib import Graph
-from rdflib.namespace import OWL
+from rdflib.namespace import OWL, RDF, RDFS
 
 from vidbpedia.common import DATASET, PARTS_DIR
 from vidbpedia.kg import validation
+from vidbpedia.vocab import DBO, SCHEMA, VIO
 
 PARTS = PARTS_DIR
 
@@ -17,6 +18,31 @@ def test_validation_has_no_errors():
     asserted = Graph().parse(os.path.join(PARTS, "asserted.nt"), format="nt")
     errors = [i for i in validation.check_asserted(ontology, asserted) if i.severity == "error"]
     assert not errors, errors[:5]
+
+
+def test_tbox_lint_catches_lecture_violations():
+    # lớp tên viết thường, thiếu nhãn, thiếu rdfs:isDefinedBy, không có tổ tiên dbo:; thuộc tính cha chưa khai báo kiểu
+    o = Graph()
+    o.add((VIO.badClass, RDF.type, OWL.Class))
+    o.add((VIO.someDate, RDF.type, OWL.DatatypeProperty))
+    o.add((VIO.someDate, RDFS.subPropertyOf, SCHEMA.birthDate))
+    found = {(i.check, i.subject.rsplit("/", 1)[-1]) for i in validation.check_tbox(o)}
+    assert {
+        ("tbox-naming", "badClass"),
+        ("tbox-labels", "badClass"),
+        ("tbox-defined-by", "someDate"),
+        ("tbox-dbo-alignment", "badClass"),
+        ("tbox-untyped", "birthDate"),
+    } <= found
+
+
+def test_ontology_follows_lecture_conventions():
+    ontology = Graph().parse(os.path.join(PARTS, "ontology.ttl"))
+    assert validation.check_tbox(ontology) == []
+    # lớp vio: do ontology của dự án định nghĩa; lớp dbo: mượn vẫn do DBpedia định nghĩa, nhóm chỉ thêm nhãn @vi
+    assert ontology.value(VIO.Person, RDFS.isDefinedBy) == VIO[""]
+    assert ontology.value(DBO.Animal, RDFS.isDefinedBy) == DBO[""]
+    assert not list(ontology.triples((VIO.Animal, None, None)))  # không tạo lớp vio: trùng lớp dbo:
 
 
 def test_inferred_part_has_no_sameas():

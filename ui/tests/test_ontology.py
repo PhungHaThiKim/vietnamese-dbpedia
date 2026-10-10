@@ -31,7 +31,9 @@ def test_ontology_axioms(client):
     assert any({i["a"], i["b"]} == {"vio:playedFor", "vio:hasPlayer"} for i in ax["inverses"])
     some = next(r for r in ax["restrictions"] if r["kind"] == "some")
     assert some["onClass"] == "vio:NationalTeamPlayer" and some["filler"] == "vio:NationalTeamStation"
-    assert some["text"].startswith("∃ careerStation") and some["inferred"] > 0
+    # dạng giao như lời giải anti-pattern Exclusivity (slide 07): FootballPlayer ⊓ ∃careerStation.NationalTeamStation
+    assert some["text"] == "FootballPlayer ⊓ ∃ careerStation.NationalTeamStation ⊑ NationalTeamPlayer"
+    assert some["inferred"] > 0
     assert any(r["kind"] == "all" and r["onClass"] == "vio:ClubStation" for r in ax["restrictions"])
     assert any(set(g) >= {"vio:Person", "vio:Organisation", "vio:Location"} for g in ax["disjoint"])
 
@@ -43,7 +45,10 @@ def test_ontology_term_includes_blank_nodes(client):
     r = client.get("/ontology/ClubStation")
     assert "owl:allValuesFrom" in r.text and "owl:AllDisjointClasses" in r.text
     r = client.get("/ontology/NationalTeamPlayer")
-    assert "owl:someValuesFrom" in r.text
+    assert "owl:someValuesFrom" in r.text and "owl:intersectionOf" in r.text
+    r = client.get("/ontology/FootballPlayer")  # lớp nằm trong phép giao của tiên đề NationalTeamPlayer
+    assert "owl:intersectionOf" in r.text and "vio:NationalTeamPlayer" in r.text
+    assert "rdfs:isDefinedBy" in r.text
     assert client.get("/ontology/KhongCoThuatNguNay").status_code == 404
 
 

@@ -67,11 +67,17 @@ export interface Stats {
   reasoningSeconds: number | null;
 }
 
-export interface ClassRow {
+/** Lớp cha DBpedia của một lớp vio:, ghi sau dấu ⊑ (không thành nút trên cây). */
+export interface DboParents {
+  dbo: string[]; // lớp cha dbo: trực tiếp
+  dboUp: string[]; // chỉ với 4 gốc: tổ tiên dbo: phía trên, ví dụ vio:Person ⊑ dbo:Person ⊑ dbo:Animal
+  dboLabels: Record<string, string>; // qname → nhãn @vi ("dbo:Animal" → "Động vật")
+}
+
+export interface ClassRow extends DboParents {
   id: string;
   label: string;
   parent: string | null;
-  dbo: string[];
   total: number;
   asserted: number;
   direct: number;
@@ -356,13 +362,12 @@ export interface OntologyProperty {
   inferred: number;
 }
 
-export interface OntologyClass {
+export interface OntologyClass extends DboParents {
   id: string;
   term: string;
   label: string;
   labelEn: string;
   parent: string | null;
-  dbo: string[];
   depth: number;
   asserted: number;
   total: number;
@@ -398,13 +403,12 @@ export interface TreeItem {
   kind: Kind;
 }
 
-export interface TreeClass {
+export interface TreeClass extends DboParents {
   id: string;
   term: string;
   label: string;
   parent: string | null;
   depth: number;
-  dbo: string[];
   total: number; // thực thể của lớp và các lớp con, kể cả nhờ suy luận
   asserted: number;
   direct: TreeItem[]; // thực thể trực tiếp, đã sắp theo nhãn và cắt bớt

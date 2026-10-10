@@ -70,7 +70,7 @@ def test_universities_linked_to_provinces(run):
 
 
 def test_national_team_players_by_restriction(run):
-    """∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer (slide 05: restriction)."""
+    """FootballPlayer ⊓ ∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer (slide 05: restriction, slide 07: dạng giao)."""
     rows = run("SELECT (COUNT(DISTINCT ?p) AS ?n) WHERE { ?p a vio:NationalTeamPlayer }")
     assert int(rows[0]["n"]) >= 100
 

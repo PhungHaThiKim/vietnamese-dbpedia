@@ -49,7 +49,7 @@ flowchart TB
         VAL["validation.py"] --> REAS["reasoning.py (owlrl)"] --> VOID["mô tả VoID"]
     end
     subgraph OUT["data/ (đầu ra)"]
-        FULL["vietnamese_dbpedia.nt / .ttl<br/>131.233 triple"]
+        FULL["vietnamese_dbpedia.nt / .ttl<br/>131.543 triple"]
         PARTS["parts/ ontology · asserted · inferred"]
         REP["stats.json · validation_report.json"]
     end
@@ -118,7 +118,7 @@ flowchart LR
 |---|---|---|---|
 | `seeds` (`crawl/wikidata_seeds.py`) | `SEEDS`: một mẫu truy vấn cho mỗi lớp | Chọn thực thể có bài viwiki; enwiki là OPTIONAL. Loại trang danh sách (Q13406463), trang định hướng (Q4167410) và tiêu đề "Danh sách…". Một QID thuộc nhiều lớp thì giữ lớp đứng trước theo thứ tự ưu tiên trong `SEEDS`. Dữ kiện lấy theo khối `VALUES` ≤ 300 QID, gồm 3 nhóm: ngày tháng qua `psv:` kèm độ chính xác (`TIME_PROPS`), số lượng kèm thời điểm `P585` (`QUANTITY_PROPS`), quan hệ kèm qualifier `P580/P582/P1350/P1351` (`ITEM_PROPS`). Quy nơi sinh và địa điểm về tỉnh bằng `wdt:P131*`. Lấy sitelink của mọi QID được tham chiếu. | `seeds.json` (990), `facts.json`, `provinces_of.json`, `sitelinks.json` |
 | `enrich` (`crawl/wiki_enrich.py`) | `seeds.json` | Gọi MediaWiki API theo lô 50 tiêu đề (wikitext: lô 10) với `formatversion=2` và `maxlag`. Lấy page ID, revision, ảnh, abstract, thể loại không ẩn, redirect, wikitext. Tìm infobox bằng `mwparserfromhell`. Giải đích các link trong infobox (đi theo redirect, đánh dấu trang định hướng). Lấy alias của template. | `pages.jsonl` (chỉ lưu tham số infobox và mục "Liên kết ngoài", không lưu cả wikitext), `link_targets.json` (2.588 tiêu đề, 71 trang định hướng), `template_aliases.json` |
-| `ontology` (`kg/ontology.py`) | `ontology/0xx–4xx-*.ttl` | Ghép module theo thứ tự số, kiểm tra cú pháp bằng rdflib | `vi-ontology.ttl` (549 triple) |
+| `ontology` (`kg/ontology.py`) | `ontology/0xx–4xx-*.ttl` | Ghép module theo thứ tự số, kiểm tra cú pháp bằng rdflib | `vi-ontology.ttl` (859 triple) |
 | `build` (`crawl/build_rdf.py`) | dữ liệu thô của hai bước đầu | `Builder.core()` sinh các dataset cơ bản cho mọi thực thể (mục 4). `build_<Lớp>()` sinh thuộc tính riêng của từng lớp. `career()` dựng `CareerStation` từ chuỗi infobox, nếu thiếu thì dùng P54. `raw_infobox()` ghi `vip:` thô. | `data/raw/rdf/*.ttl` (11 file, 88.898 triple), `mapping_stats.json` |
 | `postprocess` (`kg/postprocess.py`) | ontology + `data/raw/rdf/*.ttl` | Kiểm tra → suy luận → VoID → ghi file → đọc lại (mục 5) | `data/vietnamese_dbpedia.{nt,ttl}`, `data/parts/*`, `*_stats.json`, `validation_report.json` |
 
@@ -339,7 +339,7 @@ Một số thuộc tính cố ý không khai báo domain:
 |---|---|---|
 | Property chain | `vio:playedFor ≡ vio:careerStation ∘ vio:team` | cầu thủ → các đội từng chơi, không cần đi qua chặng |
 | Inverse | `vio:hasPlayer owl:inverseOf vio:playedFor`; `vio:hasPart` ↔ `vio:isPartOf`; `vio:predecessor` ↔ `vio:successor` | truy vấn được theo cả hai chiều |
-| Restriction (∃) | `∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer` | 486 cầu thủ được xếp vào lớp đội tuyển |
+| Restriction (∃) | `FootballPlayer ⊓ ∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer` (dạng giao như lời giải anti-pattern Exclusivity, slide 07; OWL 2 RL chỉ cho dạng này ở vế trái) | 486 cầu thủ được xếp vào lớp đội tuyển |
 | Restriction (∀) | `ClubStation ⊑ ∀team.FootballClub`; `YouthStation ⊑ ∀team.FootballClub`; `NationalTeamStation ⊑ ∀team.NationalFootballTeam` | đội nước ngoài trong chặng thi đấu có lớp, dù không phải seed |
 | Disjoint | {Person, Organisation, Location, CareerStation}; {Province, Stadium, Country}; {FootballClub, EducationalInstitution, NationalFootballTeam}; {YouthStation, ClubStation, NationalTeamStation} | reasoner báo lỗi khi mô hình suy ra điều vô lý (mục 5.2) |
 | Functional | 22 datatype property (ngày sinh, chiều cao, sức chứa…) | không đưa vào reasoner; `validation.check_functional` kiểm tra thay |
@@ -349,7 +349,7 @@ Một số thuộc tính cố ý không khai báo domain:
 | Module | Nội dung chính |
 |---|---|
 | `000-prefixes` | prefix dùng chung |
-| `050-dbo-alignment` | Chuỗi lớp DBpedia và loại (Object/Datatype) của các thuộc tính `dbo:` được ánh xạ tới, đối chiếu trên DBpedia. Không nhập domain/range của `dbo:` để tránh suy luận ngoài ý muốn. |
+| `050-dbo-alignment` | 24 lớp và 44 thuộc tính DBpedia mà `vio:` ánh xạ tới, đối chiếu trên DBpedia: cây lớp, loại (Object/Datatype), nhãn @en của DBpedia và nhãn @vi do nhóm dịch (ví dụ `dbo:Animal` "Động vật"), `rdfs:isDefinedBy dbo:`. Thêm 6 thuộc tính schema.org / WGS84 là thuộc tính cha của `vio:` (khai báo loại để không có thuật ngữ nào chưa có kiểu). Không nhập domain/range của `dbo:` để tránh suy luận ngoài ý muốn. |
 | `100-core-classes` | header `owl:Ontology` (phiên bản 2.0, CC BY-SA 4.0), 18 lớp, 4 tiên đề `owl:AllDisjointClasses` |
 | `200-person`, `220-athlete` | `birthDate`/`birthYear`, `birthProvince ⊑ birthPlace`; `careerStation`, `team`, `startYear`, `appearances`, `goals`, `onLoan`; property chain, inverse, restriction |
 | `300-location`, `310-stadium` | `province ⊑ locatedIn`, `population`, `area`, `dissolutionYear`, `successor`/`predecessor`, `capital`, `region`; `capacity`, `openingYear`, `owner`, `operator`, `tenant` |
@@ -465,7 +465,7 @@ dùng chung các hàm này.
 
 | Hàm | Kiểm tra |
 |---|---|
-| `check_tbox` | `subPropertyOf` không nối hai thuộc tính khác loại; mọi lớp `vio:` có tổ tiên `dbo:`; mọi thuật ngữ có nhãn vi và en |
+| `check_tbox` | `subPropertyOf` không nối hai thuộc tính khác loại; mọi lớp `vio:` có tổ tiên `dbo:`; mọi lớp và thuộc tính dùng trong tiên đề đều được khai báo kiểu; mọi thuật ngữ khai báo (cả `dbo:`, `schema:`, `wgs84:`) có nhãn vi và en và `rdfs:isDefinedBy` về từ vựng của nó; lớp `vio:` viết hoa chữ đầu, thuộc tính `vio:` viết thường chữ đầu |
 | `check_property_kinds` | ObjectProperty trỏ tới IRI, DatatypeProperty có giá trị là literal |
 | `check_datatype_ranges` | literal đúng `rdfs:range` (kể cả `rdf:langString`) và không ill-typed |
 | `check_required` | mỗi thực thể chính có đúng một lớp chính, nhãn @vi, `foaf:isPrimaryTopicOf`, `owl:sameAs wd:` (thiếu page ID chỉ là cảnh báo) |
@@ -496,7 +496,7 @@ Cờ `--reasoner rdfs` dùng RDFS semantics (nhanh hơn, không có chain/invers
 | `?x a dbo:Person` | 0 | 659 | `subClassOf`; 48 HLV, chủ tịch, hiệu trưởng nhờ `rdfs:range` |
 | `?x a dbo:SoccerPlayer` | 0 | 611 | `vio:FootballPlayer ⊑ dbo:SoccerPlayer` |
 | `?x a dbo:Organisation` / `dbo:Place` | 0 / 0 | 410 / 370 | `subClassOf` |
-| `?x a vio:NationalTeamPlayer` | 0 | 486 | restriction `∃careerStation.NationalTeamStation` |
+| `?x a vio:NationalTeamPlayer` | 0 | 486 | restriction `FootballPlayer ⊓ ∃careerStation.NationalTeamStation` |
 | `?x vio:playedFor ?club` | 0 | 2.772 | property chain `careerStation ∘ team` |
 | `?club vio:hasPlayer ?x` | 0 | 2.772 | `owl:inverseOf playedFor` |
 | `?x dbo:team ?t` | 0 | 3.699 | `subPropertyOf` |
@@ -546,7 +546,7 @@ flowchart TB
     GR --> T3["Tab Hỏi đáp<br/>SparqlBasedKGRAG"]
     GR --> T4["Tab SPARQL<br/>SparqlService.run"]
     subgraph MEMORY["Trong bộ nhớ, dùng chung"]
-        G[("rdflib.Graph<br/>131.233 triple")]
+        G[("rdflib.Graph<br/>131.543 triple")]
         INF[("set triple suy luận<br/>41.730")]
         IDX[("chỉ mục tìm kiếm<br/>nhãn + tên khác, bỏ dấu")]
     end
@@ -611,7 +611,7 @@ không an toàn, để khớp đúng IRI trong dữ liệu.
 
 | Tab | Module | Hoạt động |
 |---|---|---|
-| **Cây tài nguyên** (mặc định) | `web/resource_tree.ResourceTree` | Cây lớp `vio:` → tên thực thể, không kèm thuộc tính (6.5). Ô lọc theo tên, không phân biệt dấu. |
+| **Cây tài nguyên** (mặc định) | `web/resource_tree.ResourceTree` | Lớp `dbo:` → cây lớp `vio:` → tên thực thể, không kèm thuộc tính (6.5). Ô lọc theo tên, không phân biệt dấu. |
 | **Tài nguyên** | `web/resource_page.ResourceView` | Trang kiểu `dbpedia.org/page/…` (6.4). Tìm kiếm: gõ rồi Enter thì mở kết quả tốt nhất, danh sách kết quả cập nhật khi gõ. Nút "Mở truy vấn trong tab SPARQL" điền `SELECT ?p ?o WHERE { <iri> ?p ?o }` rồi chuyển tab. |
 | **Hỏi đáp** | `web/kg_rag.SparqlBasedKGRAG` | LLM sinh SPARQL, có SPARQL mode (6.6) |
 | **SPARQL** | `web/sparql.SparqlService` | Soạn truy vấn với 19 prefix khai báo sẵn và 9 truy vấn mẫu (`web/examples.py`); kết quả dạng bảng, JSON hoặc CSV theo chuẩn SPARQL Results (serializer của rdflib) |
@@ -647,7 +647,14 @@ DBpedia, và gửi link cho người khác được.
 
 ### 6.5 Cây tài nguyên (`web/resource_tree.py`)
 
-- **Cấu trúc cây:** mỗi lớp `vio:` có một cha `vio:`; 4 gốc là `Person`, `Organisation`, `Location`, `CareerStation`.
+- **Cấu trúc cây:** một lớp có thể có nhiều lớp cha nhưng cây chỉ vẽ được một, nên mọi lớp theo cùng một quy tắc:
+  cạnh của cây chỉ nối các lớp `vio:`, lớp cha `dbo:` ghi sau dấu "⊑" kèm nhãn "DBpedia" (rê chuột thấy nhãn @vi, ví dụ
+  "Động vật"). 4 gốc `vio:` là `Person`, `Organisation`, `Location`, `CareerStation`; gốc ghi cả chuỗi lớp cha theo
+  `050-dbo-alignment.ttl` (`ResourceTree.dbo_up`): `vio:Person ⊑ dbo:Person ⊑ dbo:Animal`, `vio:Organisation ⊑
+  dbo:Organisation ⊑ dbo:Agent`, `vio:Location ⊑ dbo:Place`, `vio:CareerStation ⊑ dbo:CareerStation ⊑ dbo:TimePeriod`.
+  Lớp `dbo:` không thành nút: số thực thể của chúng trùng với gốc `vio:` bên dưới (659 / 410 / 363 / 3.382) và nhãn
+  @vi cũng trùng ("Người › Người"), nên thêm nút chỉ lặp lại. Cây phân lớp của trang Thực thể vẫn hiện `dbo:` thành
+  nút vì nó liệt kê mọi `rdf:type` của một thực thể.
 - **Số đếm:** mỗi lớp ghi tổng số thành viên, gồm cả thành viên có lớp nhờ suy luận, kèm số khai báo nếu khác.
   Ví dụ `vio:FootballClub 215 (61 khai báo)`, phần còn lại là đội nước ngoài suy ra từ restriction ∀.
 - **Thành viên trực tiếp:** là thành viên của lớp nhưng không thuộc lớp con nào (`members[c] − ∪ members[con]`), giống
@@ -743,18 +750,18 @@ python -m vidbpedia query --endpoint http://127.0.0.1:7860/sparql "SELECT …"
 
 ## 7. Kiểm thử
 
-`pytest` có 58 test, chạy trong khoảng 25 giây. Fixture `graph` trong `tests/conftest.py` nạp dataset một lần cho cả
+`pytest` có 62 test, chạy trong khoảng 25 giây. Fixture `graph` trong `tests/conftest.py` nạp dataset một lần cho cả
 phiên. Các test dùng cận dưới thay cho số cứng, để không gãy khi crawl lại.
 
 | File | Số test | Nội dung |
 |---|---|---|
 | `test_sparql.py` | 12 | Competency questions có đáp án, ví dụ: lớp `dbo:` nhờ suy luận; quá trình thi đấu của Công Phượng; chain và inverse; CLB → sân → tỉnh; tỉnh nhiều cầu thủ nhất; 34 tỉnh hiện hành, Hà Tây → Hà Nội; redirect; `owl:sameAs` Unicode. Cũng chạy mọi truy vấn mẫu và ví dụ trong prompt. |
-| `test_quality.py` | 3 | validation ra 0 lỗi; phần suy luận không có `owl:sameAs`; số liệu trong stats nhất quán |
-| `test_reasoning.py` | 3 | chain, inverse, restriction, báo vi phạm disjoint trên graph nhỏ |
+| `test_quality.py` | 5 | validation ra 0 lỗi; lint ontology theo quy ước bài giảng (bắt được lớp viết thường, thiếu nhãn, thiếu `rdfs:isDefinedBy`, thuộc tính cha chưa khai báo kiểu); phần suy luận không có `owl:sameAs`; số liệu trong stats nhất quán |
+| `test_reasoning.py` | 4 | chain, inverse, restriction, báo vi phạm disjoint trên graph nhỏ; tiên đề `NationalTeamPlayer` ở dạng giao |
 | `test_infobox.py` | 6 | template lồng, số kiểu Việt, ngày thành lập, cho mượn, danh sách, ngoặc rỗng, quy tắc IRI |
 | `test_kg_rag.py` | 5 | luồng hỏi đáp với LLM giả lập: tự sửa, SPARQL mode, tách `answer`/`reasoning`, chặn CONSTRUCT/DELETE |
 | `test_resource_page.py` | 14 | tìm kiếm bỏ dấu, trang tài nguyên, cây phân lớp, content negotiation, 303, 4 định dạng RDF đọc lại được, `/ontology` |
-| `test_resource_tree.py` | 4 | cây lớp, thành viên trực tiếp, chỉ có tên (không có thuộc tính), ô lọc |
+| `test_resource_tree.py` | 5 | cây lớp, lớp cha `dbo:` ghi sau "⊑" (gốc có cả chuỗi `dbo:Person ⊑ dbo:Animal`, không có nút trùng tên), thành viên trực tiếp, chỉ có tên (không có thuộc tính), ô lọc |
 | `test_endpoint.py` | 11 | `/sparql` qua GET, POST form và POST trực tiếp; chọn định dạng theo `Accept`/`format`; XML đọc lại đúng `0`/`false`; ASK, CONSTRUCT; chặn cú pháp sai, `INSERT`, `FROM`, `SERVICE`; lệnh `query` trên dataset và qua endpoint (giữ `ORDER BY`) |
 
 ---
@@ -766,6 +773,9 @@ phiên. Các test dùng cận dưới thay cho số cứng, để không gãy kh
 | Chọn thực thể qua Wikidata (`P31`, `P27`/`P17 = Q881`) | Thể loại viwiki do người dùng gán, thiếu nhất quán. Pipeline cũ crawl theo alphabet ra phần lớn tên tiểu hành tinh. | Duyệt cây thể loại; crawl toàn bộ |
 | Domain bóng đá + tỉnh + đại học | Các thực thể trỏ lẫn nhau (cầu thủ → đội → sân → tỉnh), 78% có bài enwiki, hơn 95% có infobox | Domain người nổi tiếng (bản cũ có 378 người nước ngoài, không nối được với gì) |
 | Ontology riêng `vio:` ⊑ `dbo:`, rồi suy luận ra `dbo:` | Có thuộc tính DBpedia chưa có (CareerStation chi tiết, FormerProvince); vẫn truy vấn được bằng từ vựng DBpedia | Dùng thẳng `dbo:` |
+| Nối `vio:` với `dbo:` bằng `rdfs:subClassOf`, không dùng `owl:equivalentClass` | Domain, functional và disjoint của `vio:` chỉ áp lên dữ liệu của dự án; dùng tương đương thì mọi `dbo:Person` khi gộp graph cũng bị ràng buộc (anti-pattern Exclusivity, slide 07). Giống cách DBpedia nối vào DOLCE | `vio:Person owl:equivalentClass dbo:Person` |
+| Cây lớp chỉ vẽ cạnh giữa lớp `vio:`; lớp cha `dbo:` ghi sau "⊑" | Cây chỉ vẽ được một cha (đa kế thừa, slide 03) nên cần một quy tắc cho mọi lớp; ánh xạ sang từ vựng ngoài là thông tin của từng lớp (quy tắc LOD 5, slide 04); cây lớp của DBpedia cũng không lấy lớp DOLCE làm gốc. Nút `dbo:` chỉ lặp số và nhãn của gốc `vio:` | Treo 4 gốc dưới chuỗi lớp `dbo:` |
+| Chỉ tạo lớp `vio:` khi có tiên đề hoặc câu hỏi cần; lớp phía trên dùng lại `dbo:` kèm nhãn @vi | Không có `vio:Animal`, `vio:Agent`, `vio:Place`, `vio:TimePeriod`: không câu hỏi hay tiên đề nào cần, thêm vào chỉ tạo IRI thứ hai cho cùng khái niệm. "Động vật" là nhãn của `dbo:Animal` (URI khác nhãn, slide 03; AAA) | Tạo lớp `vio:` cho mọi lớp `dbo:` trên chuỗi |
 | IRI giữ Unicode | Giống các chapter DBpedia và `dbr:` hiện tại, dễ đọc | Mã hoá phần trăm toàn bộ |
 | Suy luận trên "phần khung", bỏ sameAs/functional/cardinality | Nhanh hơn; tránh OWL RL gộp thực thể | Suy luận trên cả graph |
 | Tách khai báo / suy luận thành file riêng | Biết triple nào do reasoner sinh ra; hiển thị được nhãn "suy luận" trên giao diện | Chỉ xuất bản gộp |
@@ -785,7 +795,7 @@ Ví dụ thêm lớp huấn luyện viên. Các chỗ cần sửa, theo thứ t�
    - Thêm `(Lớp, mẫu Wikidata)` vào `SEEDS`, đúng vị trí ưu tiên.
    - Thêm thuộc tính cần lấy vào `TIME_PROPS` / `QUANTITY_PROPS` / `ITEM_PROPS`.
 2. **Ontology:**
-   - Thêm lớp, thuộc tính và nhãn vi/en vào một module trong `ontology/`, kèm `rdfs:subClassOf` một lớp `dbo:`. Nếu cần, thêm lớp đó vào một tiên đề disjoint.
+   - Thêm lớp, thuộc tính, nhãn vi/en và `rdfs:isDefinedBy vio:` vào một module trong `ontology/`, kèm `rdfs:subClassOf` một lớp `dbo:`. Lớp `dbo:` mới dùng tới thì khai báo ở `050-dbo-alignment.ttl` (kiểu, nhãn, `rdfs:isDefinedBy dbo:`). Nếu cần, thêm lớp đó vào một tiên đề disjoint. `check_tbox` báo lỗi nếu thiếu.
    - Chạy `python -m vidbpedia ontology`.
 3. **Ánh xạ infobox:** `crawl/infobox_mappings.py`
    - Thêm họ template vào `MAPPINGS` và `CLASS_FAMILY`.

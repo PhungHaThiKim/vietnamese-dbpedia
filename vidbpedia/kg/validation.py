@@ -1,9 +1,11 @@
 """Kiểm tra chất lượng ontology và dữ liệu. Mỗi hàm check_* trả list[Issue]."""
 
+import re
 from collections import Counter, defaultdict
 from dataclasses import asdict, dataclass
 
 from rdflib import Literal, URIRef
+from rdflib.collection import Collection
 from rdflib.namespace import FOAF, OWL, RDF, RDFS, XSD
 
 from vidbpedia.vocab import DBO, DBR, VIO, VRES, WD
@@ -47,27 +49,62 @@ def _superclasses(ontology):
     return sup
 
 
+def _list_members(ontology, predicate):
+    for lst in ontology.objects(None, predicate):
+        yield from Collection(ontology, lst)
+
+
+def _used_terms(ontology):
+    """→ (thuộc tính, lớp) được nhắc tới trong tiên đề của ontology, kể cả từ vựng ngoài (dbo:, schema:, wgs84:)."""
+    props = set(_list_members(ontology, OWL.propertyChainAxiom)) | set(ontology.objects(None, OWL.onProperty))
+    for pred in (RDFS.subPropertyOf, OWL.inverseOf):
+        props |= set(ontology.subjects(pred, None)) | set(ontology.objects(None, pred))
+    classes = set()
+    for pred in (RDFS.subClassOf, RDFS.domain, OWL.someValuesFrom, OWL.allValuesFrom):
+        classes |= set(ontology.objects(None, pred))
+    for p in ontology.subjects(RDF.type, OWL.ObjectProperty):  # range của DatatypeProperty là kiểu xsd:
+        classes |= set(ontology.objects(p, RDFS.range))
+    for pred in (OWL.members, OWL.intersectionOf, OWL.unionOf):
+        classes |= set(_list_members(ontology, pred))
+    return {p for p in props if isinstance(p, URIRef)}, {c for c in classes if isinstance(c, URIRef)}
+
+
 def check_tbox(ontology):
-    """Lint ontology: subPropertyOf cùng loại, lớp vio: có tổ tiên dbo:, thuật ngữ vio: đủ nhãn vi/en."""
+    """Lint ontology theo bài giảng: thuộc tính con cùng loại với thuộc tính cha; lớp vio: có tổ tiên dbo:;
+    mọi thuật ngữ dùng trong tiên đề đều được khai báo kiểu (slide 05: OWL không trộn lớp/thuộc tính/cá thể);
+    mọi thuật ngữ khai báo có nhãn vi và en (slide 07, presentation patterns) và rdfs:isDefinedBy trỏ về
+    từ vựng định nghĩa nó (slide 03); lớp vio: viết hoa chữ đầu, thuộc tính vio: viết thường chữ đầu (slide 07)."""
     issues, kinds = [], _kinds(ontology)
     for a, b in ontology.subject_objects(RDFS.subPropertyOf):
         if a in kinds and b in kinds and kinds[a] != kinds[b]:
             issues.append(Issue("error", "tbox-subproperty-kind", str(a), f"{kinds[a]} ⊑ {kinds[b]} ({b})"))
     sup = _superclasses(ontology)
-    for c in ontology.subjects(RDF.type, OWL.Class):
+    classes = set(ontology.subjects(RDF.type, OWL.Class))
+    for c in classes:
         if str(c).startswith(str(VIO)) and not any(str(s).startswith(str(DBO)) for s in sup[c]):
             issues.append(Issue("error", "tbox-dbo-alignment", str(c), "lớp vio: không có tổ tiên dbo:"))
-    terms = [
-        t
-        for t in set(ontology.subjects(RDF.type, None))
-        if str(t).startswith(str(VIO)) and t != URIRef(str(VIO))
-    ]
-    for t in terms:
+    used_props, used_classes = _used_terms(ontology)
+    for p in sorted(used_props - set(kinds)):
+        issues.append(
+            Issue("error", "tbox-untyped", str(p), "thuộc tính chưa khai báo Object/DatatypeProperty")
+        )
+    for c in sorted(used_classes - classes):
+        issues.append(Issue("error", "tbox-untyped", str(c), "lớp chưa khai báo owl:Class"))
+    for t in sorted({t for t in classes | set(kinds) if isinstance(t, URIRef)}):
         langs = {lbl.language for lbl in ontology.objects(t, RDFS.label)}
         if not {"vi", "en"} <= langs:
             issues.append(
                 Issue("error", "tbox-labels", str(t), f"thiếu nhãn: {sorted({'vi', 'en'} - langs)}")
             )
+        if not any(str(t).startswith(str(d)) for d in ontology.objects(t, RDFS.isDefinedBy)):
+            issues.append(
+                Issue("error", "tbox-defined-by", str(t), "thiếu rdfs:isDefinedBy về từ vựng của nó")
+            )
+        if str(t).startswith(str(VIO)):
+            name = str(t)[len(VIO) :]
+            pattern = r"[A-Z][A-Za-z0-9]*" if t in classes else r"[a-z][A-Za-z0-9]*"
+            if not re.fullmatch(pattern, name):
+                issues.append(Issue("error", "tbox-naming", str(t), f"tên không theo CamelCase: {name}"))
     return issues
 
 

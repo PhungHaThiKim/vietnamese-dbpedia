@@ -1,7 +1,8 @@
 """/api/tree: dữ liệu của tab "Cây tài nguyên" (Gradio) cho trang Ontology của UI mới.
 
-Dùng chính `ResourceTree` của team (lớp, thành viên, thực thể trực tiếp, ba nhóm Thể loại / Đổi hướng / Chỉ có
-nhãn) và cùng quy tắc lọc, giới hạn (300 tên mỗi nút, 100 khi lọc), nên hai giao diện hiện cùng một con số.
+Dùng chính `ResourceTree` của team (cây lớp vio:, lớp cha dbo: ghi sau dấu ⊑, thành viên, thực thể trực tiếp, ba
+nhóm Thể loại / Đổi hướng / Chỉ có nhãn) và cùng quy tắc lọc, giới hạn (300 tên mỗi nút, 100 khi lọc), nên hai giao
+diện hiện cùng một con số.
 """
 
 from fastapi import APIRouter, Query
@@ -9,7 +10,7 @@ from fastapi import APIRouter, Query
 from ui.api import serialize
 from ui.api.state import kg
 from vidbpedia.web.resource_page import fold
-from vidbpedia.web.resource_tree import MAX_LIST, MAX_LIST_FILTERED, ROOT_ORDER
+from vidbpedia.web.resource_tree import MAX_LIST, MAX_LIST_FILTERED
 
 router = APIRouter(prefix="/api")
 
@@ -37,7 +38,7 @@ def _class_rows(tree, c, match, depth, out) -> bool:
         "label": tree.label(c),
         "parent": tree.view.qname(tree.parent[c]) if tree.parent[c] is not None else None,
         "depth": depth,
-        "dbo": [tree.view.qname(d) for d in tree.dbo[c]],
+        **serialize.dbo_parents(tree, c),
         "total": len(tree.members[c]),
         "asserted": tree.asserted[c],
         "direct": direct,
@@ -59,8 +60,7 @@ def resource_tree(q: str = Query("", max_length=200)):
     query = " ".join(fold(q).split())
     match = (lambda s: query in fold(tree.label(s))) if query else None
 
-    roots = [c for c in ROOT_ORDER if c in tree.parent and tree.parent[c] is None]
-    roots += [c for c in tree.classes if tree.parent[c] is None and c not in roots]
+    roots = tree.roots  # 4 gốc vio:; lớp cha dbo: của gốc nằm ở dbo / dboUp, không thành nút
     classes: list[dict] = []
     for r in roots:
         _class_rows(tree, r, match, 0, classes)

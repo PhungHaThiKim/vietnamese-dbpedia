@@ -1,80 +1,135 @@
-@prefix dbo:  <http://dbpedia.org/ontology/> .
-@prefix rdfs: <http://www.w3.org/2000/01/rdf-schema#> .
-@prefix owl:  <http://www.w3.org/2002/07/owl#> .
+@prefix dbo:    <http://dbpedia.org/ontology/> .
+@prefix schema: <http://schema.org/> .
+@prefix wgs84:  <http://www.w3.org/2003/01/geo/wgs84_pos#> .
+@prefix rdfs:   <http://www.w3.org/2000/01/rdf-schema#> .
+@prefix owl:    <http://www.w3.org/2002/07/owl#> .
 
-# ===== Trích DBpedia Ontology: các lớp và thuộc tính dbo: mà vio: ánh xạ tới =====
-# Đối chiếu trên https://dbpedia.org/sparql ngày 07/10/2026.
-# Chỉ lấy cây lớp và loại thuộc tính (Object/Datatype); KHÔNG lấy domain/range của dbo:
-# để suy luận trên dữ liệu vio: không kéo theo các ràng buộc ngoài phạm vi dự án.
+# ===== Trích từ vựng ngoài: các lớp và thuộc tính dbo: (và schema:, wgs84:) mà vio: ánh xạ tới =====
+# Đối chiếu trên https://dbpedia.org/sparql ngày 07/10/2026; nhãn @en lấy lại ngày 10/10/2026.
+# Chỉ lấy cây lớp, nhãn và loại thuộc tính (Object/Datatype); KHÔNG lấy domain/range của dbo:
+# để suy luận trên dữ liệu vio: không kéo theo các ràng buộc ngoài phạm vi dự án (anti-pattern Exclusivity, slide 07).
+# Các thuật ngữ này do DBpedia định nghĩa (rdfs:isDefinedBy dbo:, slide 03 "link to defining schema"); nhóm chỉ
+# nói thêm về chúng theo nguyên tắc AAA: nhãn @en là nhãn của DBpedia, nhãn @vi do nhóm dịch vì DBpedia không có.
+# Lớp dbo: không cần lớp vio: trùng tên: "Động vật" là nhãn của dbo:Animal, không phải một lớp mới (slide 03, URI vs label).
 
 # --- Cây lớp ---
-dbo:Person a owl:Class ; rdfs:subClassOf dbo:Animal .
-dbo:Athlete a owl:Class ; rdfs:subClassOf dbo:Person .
-dbo:SoccerPlayer a owl:Class ; rdfs:subClassOf dbo:Athlete .
+dbo:Animal a owl:Class ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "Động vật"@vi , "animal"@en .
+dbo:Person a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Animal ;
+  rdfs:label "Người"@vi , "person"@en .
+dbo:Athlete a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Person ;
+  rdfs:label "Vận động viên"@vi , "athlete"@en .
+dbo:SoccerPlayer a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Athlete ;
+  rdfs:label "Cầu thủ bóng đá"@vi , "soccer player"@en .
 
-dbo:Organisation a owl:Class ; rdfs:subClassOf dbo:Agent .
-dbo:SportsClub a owl:Class ; rdfs:subClassOf dbo:Organisation .
-dbo:SoccerClub a owl:Class ; rdfs:subClassOf dbo:SportsClub .
-dbo:NationalSoccerClub a owl:Class ; rdfs:subClassOf dbo:SoccerClub .
-dbo:EducationalInstitution a owl:Class ; rdfs:subClassOf dbo:Organisation .
-dbo:University a owl:Class ; rdfs:subClassOf dbo:EducationalInstitution .
+dbo:Agent a owl:Class ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "Tác nhân"@vi , "agent"@en .
+dbo:Organisation a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Agent ;
+  rdfs:label "Tổ chức"@vi , "organisation"@en .
+dbo:SportsClub a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Organisation ;
+  rdfs:label "Câu lạc bộ thể thao"@vi , "sports club"@en .
+dbo:SoccerClub a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:SportsClub ;
+  rdfs:label "Câu lạc bộ bóng đá"@vi , "soccer club"@en .
+dbo:NationalSoccerClub a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:SoccerClub ;
+  rdfs:label "Đội tuyển bóng đá quốc gia"@vi , "national soccer club"@en .
+dbo:EducationalInstitution a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Organisation ;
+  rdfs:label "Cơ sở giáo dục"@vi , "educational institution"@en .
+dbo:University a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:EducationalInstitution ;
+  rdfs:label "Trường đại học"@vi , "university"@en .
 
-dbo:PopulatedPlace a owl:Class ; rdfs:subClassOf dbo:Place .
-dbo:Country a owl:Class ; rdfs:subClassOf dbo:PopulatedPlace .
-dbo:Region a owl:Class ; rdfs:subClassOf dbo:PopulatedPlace .
-dbo:AdministrativeRegion a owl:Class ; rdfs:subClassOf dbo:Region .
-dbo:GovernmentalAdministrativeRegion a owl:Class ; rdfs:subClassOf dbo:AdministrativeRegion .
-dbo:Province a owl:Class ; rdfs:subClassOf dbo:GovernmentalAdministrativeRegion .
+dbo:Place a owl:Class ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "Địa điểm"@vi , "place"@en .
+dbo:PopulatedPlace a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Place ;
+  rdfs:label "Nơi có dân cư"@vi , "populated place"@en .
+dbo:Country a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:PopulatedPlace ;
+  rdfs:label "Quốc gia"@vi , "country"@en .
+dbo:Region a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:PopulatedPlace ;
+  rdfs:label "Vùng"@vi , "region"@en .
+dbo:AdministrativeRegion a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Region ;
+  rdfs:label "Đơn vị hành chính"@vi , "administrative region"@en .
+dbo:GovernmentalAdministrativeRegion a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:AdministrativeRegion ;
+  rdfs:label "Đơn vị hành chính nhà nước"@vi , "governmental administrative region"@en .
+dbo:Province a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:GovernmentalAdministrativeRegion ;
+  rdfs:label "Tỉnh"@vi , "province"@en .
 
-dbo:Building a owl:Class ; rdfs:subClassOf dbo:ArchitecturalStructure .
-dbo:Venue a owl:Class ; rdfs:subClassOf dbo:Building .
-dbo:Stadium a owl:Class ; rdfs:subClassOf dbo:Venue .
+dbo:ArchitecturalStructure a owl:Class ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "Công trình kiến trúc"@vi , "architectural structure"@en .
+dbo:Building a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:ArchitecturalStructure ;
+  rdfs:label "Tòa nhà"@vi , "building"@en .
+dbo:Venue a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Building ;
+  rdfs:label "Địa điểm tổ chức sự kiện"@vi , "venue"@en .
+dbo:Stadium a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:Venue ;
+  rdfs:label "Sân vận động"@vi , "stadium"@en .
 
-dbo:CareerStation a owl:Class ; rdfs:subClassOf dbo:TimePeriod .
+dbo:TimePeriod a owl:Class ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "Khoảng thời gian"@vi , "time period"@en .
+dbo:CareerStation a owl:Class ; rdfs:isDefinedBy dbo: ; rdfs:subClassOf dbo:TimePeriod ;
+  rdfs:label "Giai đoạn sự nghiệp"@vi , "career station"@en .
 
-# --- Loại thuộc tính ---
-dbo:birthPlace a owl:ObjectProperty .
-dbo:position a owl:ObjectProperty .
-dbo:team a owl:ObjectProperty .
-dbo:careerStation a owl:ObjectProperty .
-dbo:ground a owl:ObjectProperty .
-dbo:league a owl:ObjectProperty .
-dbo:manager a owl:ObjectProperty .
-dbo:chairman a owl:ObjectProperty .
-dbo:location a owl:ObjectProperty .
-dbo:rector a owl:ObjectProperty .
-dbo:affiliation a owl:ObjectProperty .
-dbo:capital a owl:ObjectProperty .
-dbo:country a owl:ObjectProperty .
-dbo:region a owl:ObjectProperty .
-dbo:owner a owl:ObjectProperty .
-dbo:operator a owl:ObjectProperty .
-dbo:tenant a owl:ObjectProperty .
-dbo:successor a owl:ObjectProperty .
-dbo:predecessor a owl:ObjectProperty .
-dbo:isPartOf a owl:ObjectProperty .
-dbo:thumbnail a owl:ObjectProperty .
-dbo:wikiPageRedirects a owl:ObjectProperty .
-dbo:wikiPageExternalLink a owl:ObjectProperty .
+# --- Loại thuộc tính (slide 05: OWL tách ObjectProperty và DatatypeProperty) ---
+dbo:birthPlace a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "nơi sinh"@vi , "birth place"@en .
+dbo:position a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "vị trí"@vi , "position"@en .
+dbo:team a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "đội"@vi , "team"@en .
+dbo:careerStation a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "giai đoạn sự nghiệp"@vi , "career station"@en .
+dbo:ground a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "sân nhà"@vi , "ground"@en .
+dbo:league a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "giải đấu"@vi , "league"@en .
+dbo:manager a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "huấn luyện viên trưởng"@vi , "manager"@en .
+dbo:chairman a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "chủ tịch"@vi , "chairman"@en .
+dbo:location a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "địa điểm"@vi , "location"@en .
+dbo:rector a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "hiệu trưởng"@vi , "rector"@en .
+dbo:affiliation a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "trực thuộc"@vi , "affiliation"@en .
+dbo:capital a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "thủ phủ"@vi , "capital"@en .
+dbo:country a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "quốc gia"@vi , "country"@en .
+dbo:region a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "vùng"@vi , "region"@en .
+dbo:owner a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "chủ sở hữu"@vi , "owner"@en .
+dbo:operator a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "đơn vị vận hành"@vi , "operator"@en .
+dbo:tenant a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "bên thuê"@vi , "tenant"@en .
+dbo:successor a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "kế nhiệm"@vi , "successor"@en .
+dbo:predecessor a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "tiền nhiệm"@vi , "predecessor"@en .
+dbo:isPartOf a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "là một phần của"@vi , "is part of"@en .
+dbo:thumbnail a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "ảnh thu nhỏ"@vi , "thumbnail"@en .
+dbo:wikiPageRedirects a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "đổi hướng tới trang"@vi , "Wikipage redirect"@en .
+dbo:wikiPageExternalLink a owl:ObjectProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "liên kết ngoài của trang Wikipedia"@vi , "Link from a Wikipage to an external page"@en .
 
-dbo:birthDate a owl:DatatypeProperty .
-dbo:birthYear a owl:DatatypeProperty .
-dbo:deathDate a owl:DatatypeProperty .
-dbo:height a owl:DatatypeProperty .
-dbo:number a owl:DatatypeProperty .
-dbo:numberOfMatches a owl:DatatypeProperty .
-dbo:numberOfGoals a owl:DatatypeProperty .
-dbo:foundingDate a owl:DatatypeProperty .
-dbo:foundingYear a owl:DatatypeProperty .
-dbo:abbreviation a owl:DatatypeProperty .
-dbo:motto a owl:DatatypeProperty .
-dbo:numberOfStudents a owl:DatatypeProperty .
-dbo:facultySize a owl:DatatypeProperty .
-dbo:populationTotal a owl:DatatypeProperty .
-dbo:dissolutionYear a owl:DatatypeProperty .
-dbo:seatingCapacity a owl:DatatypeProperty .
-dbo:openingYear a owl:DatatypeProperty .
-dbo:abstract a owl:DatatypeProperty .
-dbo:wikiPageID a owl:DatatypeProperty .
-dbo:wikiPageRevisionID a owl:DatatypeProperty .
-dbo:wikiPageLength a owl:DatatypeProperty .
+dbo:birthDate a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "ngày sinh"@vi , "birth date"@en .
+dbo:birthYear a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "năm sinh"@vi , "birth year"@en .
+dbo:deathDate a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "ngày mất"@vi , "death date"@en .
+dbo:height a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "chiều cao"@vi , "height (μ)"@en .
+dbo:number a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "số"@vi , "number"@en .
+dbo:numberOfMatches a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "số trận"@vi , "number of matches or caps"@en .
+dbo:numberOfGoals a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "số bàn thắng"@vi , "number of goals scored"@en .
+dbo:foundingDate a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "ngày thành lập"@vi , "founding date"@en .
+dbo:foundingYear a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "năm thành lập"@vi , "founding year"@en .
+dbo:abbreviation a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "tên viết tắt"@vi , "abbreviation"@en .
+dbo:motto a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "khẩu hiệu"@vi , "motto"@en .
+dbo:numberOfStudents a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "số sinh viên"@vi , "number of students"@en .
+dbo:facultySize a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "số giảng viên"@vi , "faculty size"@en .
+dbo:populationTotal a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "tổng dân số"@vi , "population total"@en .
+dbo:dissolutionYear a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "năm giải thể"@vi , "dissolution year"@en .
+dbo:seatingCapacity a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "sức chứa"@vi , "seating capacity"@en .
+dbo:openingYear a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "năm khánh thành"@vi , "opening year"@en .
+dbo:abstract a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ; rdfs:label "tóm tắt"@vi , "has abstract"@en .
+dbo:wikiPageID a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "mã trang Wikipedia"@vi , "Wikipage page ID"@en .
+dbo:wikiPageRevisionID a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "mã phiên bản trang Wikipedia"@vi , "Wikipage revision ID"@en .
+dbo:wikiPageLength a owl:DatatypeProperty ; rdfs:isDefinedBy dbo: ;
+  rdfs:label "độ dài trang Wikipedia (ký tự)"@vi , "page length (characters) of wiki page"@en .
+
+# --- Từ vựng phổ biến khác mà thuộc tính vio: là thuộc tính con (slide 04: dùng từ vựng phổ biến) ---
+# Khai báo loại để mọi thuộc tính dùng trong ontology đều có kiểu (slide 05: không trộn lớp, thuộc tính, cá thể).
+schema:birthDate a owl:DatatypeProperty ; rdfs:isDefinedBy schema: ; rdfs:label "ngày sinh"@vi , "birthDate"@en .
+schema:deathDate a owl:DatatypeProperty ; rdfs:isDefinedBy schema: ; rdfs:label "ngày mất"@vi , "deathDate"@en .
+schema:birthPlace a owl:ObjectProperty ; rdfs:isDefinedBy schema: ; rdfs:label "nơi sinh"@vi , "birthPlace"@en .
+schema:location a owl:ObjectProperty ; rdfs:isDefinedBy schema: ; rdfs:label "địa điểm"@vi , "location"@en .
+wgs84:lat a owl:DatatypeProperty ; rdfs:isDefinedBy wgs84: ; rdfs:label "vĩ độ"@vi , "latitude"@en .
+wgs84:long a owl:DatatypeProperty ; rdfs:isDefinedBy wgs84: ; rdfs:label "kinh độ"@vi , "longitude"@en .

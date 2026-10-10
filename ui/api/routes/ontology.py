@@ -12,9 +12,9 @@ from rdflib import URIRef
 from rdflib.collection import Collection
 from rdflib.namespace import OWL, RDF, RDFS
 
+from ui.api import serialize
 from ui.api.state import kg
 from vidbpedia.vocab import VIO
-from vidbpedia.web.resource_tree import ROOT_ORDER
 
 router = APIRouter(prefix="/api")
 
@@ -35,6 +35,19 @@ def _labels(g, term) -> tuple[str, str | None]:
 
 def _qname(view, term):
     return view.qname(term) if isinstance(term, URIRef) else None
+
+
+def _intersection_of(g, node):
+    """→ (nút intersectionOf chứa `node`, các lớp có tên khác trong phép giao); không nằm trong phép giao → (node, [])."""
+    cell = g.value(predicate=RDF.first, object=node)
+    if cell is None:
+        return node, []
+    while (prev := g.value(predicate=RDF.rest, object=cell)) is not None:
+        cell = prev
+    owner = g.value(predicate=OWL.intersectionOf, object=cell)
+    if owner is None:
+        return node, []
+    return owner, [m for m in Collection(g, cell) if isinstance(m, URIRef)]
 
 
 def _properties(g, view, by_predicate: Counter) -> list[dict]:
@@ -84,7 +97,7 @@ def _classes(g, view, tree, props: list[dict]) -> list[dict]:
                 "label": vi,
                 "labelEn": en,
                 "parent": view.qname(tree.parent[c]) if tree.parent[c] is not None else None,
-                "dbo": [view.qname(d) for d in tree.dbo[c]],
+                **serialize.dbo_parents(tree, c),
                 "depth": depth,
                 "asserted": tree.asserted[c],
                 "total": len(tree.members[c]),
@@ -94,9 +107,7 @@ def _classes(g, view, tree, props: list[dict]) -> list[dict]:
         for child in sorted(tree.children[c], key=tree.label):
             visit(child, depth + 1)
 
-    roots = [c for c in ROOT_ORDER if c in tree.parent and tree.parent[c] is None]
-    roots += [c for c in tree.classes if tree.parent[c] is None and c not in roots]
-    for r in roots:
+    for r in tree.roots:
         visit(r, 0)
     return out
 
@@ -134,9 +145,13 @@ def _axioms(g, view, by_predicate: Counter, by_type: Counter) -> dict:
         if prop is None or (some is None and every is None):
             continue
         if some is not None:
-            # [restriction] rdfs:subClassOf C  ⇔  ∃ p.F ⊑ C : thực thể có p tới một F được gán lớp C
-            on_class, filler, kind = g.value(r, RDFS.subClassOf), some, "some"
-            text = f"∃ {_local(prop)}.{_local(filler)} ⊑ {_local(on_class)}" if on_class is not None else ""
+            # [restriction] rdfs:subClassOf C  ⇔  ∃ p.F ⊑ C : thực thể có p tới một F được gán lớp C.
+            # Restriction nằm trong một phép giao (A ⊓ ∃ p.F ⊑ C, lời giải anti-pattern Exclusivity) thì
+            # tiên đề nằm trên nút intersectionOf và các lớp A đứng trước.
+            head, others = _intersection_of(g, r)
+            on_class, filler, kind = g.value(head, RDFS.subClassOf), some, "some"
+            lhs = " ⊓ ".join([*(_local(a) for a in others), f"∃ {_local(prop)}.{_local(filler)}"])
+            text = f"{lhs} ⊑ {_local(on_class)}" if on_class is not None else ""
             inferred = by_type.get(on_class, 0)
         else:
             # C rdfs:subClassOf [restriction]  ⇔  C ⊑ ∀ p.F : mọi giá trị p của một C được gán lớp F

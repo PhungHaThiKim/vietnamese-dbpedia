@@ -78,3 +78,15 @@ def integer(term) -> int | None:
         return int(str(term))
     except (TypeError, ValueError):
         return None
+
+
+def dbo_parents(tree, c) -> dict:
+    """Lớp cha DBpedia của lớp vio: c, ghi sau dấu ⊑ trên cây: {dbo: cha trực tiếp, dboUp: tổ tiên (chỉ với gốc),
+    dboLabels: qname → nhãn @vi để hiện khi rê chuột, ví dụ dbo:Animal → "Động vật"}."""
+    q = tree.view.qname
+    up = tree.dbo_up.get(c, [])
+    return {
+        "dbo": [q(d) for d in tree.dbo[c]],
+        "dboUp": [q(d) for d in up],
+        "dboLabels": {q(d): tree.label(d) for d in [*tree.dbo[c], *up]},
+    }

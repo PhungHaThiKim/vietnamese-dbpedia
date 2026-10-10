@@ -103,8 +103,8 @@ export function OverviewPage() {
         <section className="card">
           <h2>Cây lớp <code>vio:</code> ({byClass.length} lớp)</h2>
           <p className="muted small">
-            Độ dài ∝ số thực thể (gồm cả lớp con). Đoạn đứt tím là phần chỉ có nhờ suy luận. Bấm tên lớp để xem định nghĩa ở trang{" "}
-            <Link to="/ontology">Ontology</Link>.
+            Độ dài ∝ số thực thể (gồm cả lớp con). Đoạn đứt tím là phần chỉ có nhờ suy luận. Dòng “⊑” dưới tên là lớp cha DBpedia; gốc ghi
+            cả chuỗi, ví dụ <code>dbo:Person ⊑ dbo:Animal</code>. Bấm tên lớp để xem định nghĩa ở trang <Link to="/ontology">Ontology</Link>.
           </p>
           <ClassBars rows={byClass} showInferred={showInferred} />
         </section>

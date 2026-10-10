@@ -1,7 +1,8 @@
 """Suy luận OWL-RL trên graph nhỏ: kiểu dbo:, thuộc tính dbo:, inverse, property chain, restriction; không lan owl:sameAs."""
 
 from rdflib import Graph, Literal
-from rdflib.namespace import OWL, RDF, XSD
+from rdflib.collection import Collection
+from rdflib.namespace import OWL, RDF, RDFS, XSD
 
 from vidbpedia.common import ONTOLOGY_FILE
 from vidbpedia.kg.reasoning import materialize
@@ -47,6 +48,15 @@ def test_materialize_dbo_inverse_chain_restriction():
     assert (VRES.CLB_X, RDF.type, DBO.SoccerClub) in inferred
     assert (p, RDF.type, VIO.NationalTeamPlayer) in inferred  # ∃careerStation.NationalTeamStation
     assert (VRES.Ha_Noi, RDF.type, VIO.Location) in inferred  # range của birthPlace
+
+
+def test_national_team_player_is_intersection():
+    # slide 07, anti-pattern Exclusivity: định nghĩa bằng giao FootballPlayer ⊓ ∃careerStation.NationalTeamStation
+    (axiom,) = list(ONTOLOGY.subjects(RDFS.subClassOf, VIO.NationalTeamPlayer))
+    members = list(Collection(ONTOLOGY, ONTOLOGY.value(axiom, OWL.intersectionOf)))
+    assert members[0] == VIO.FootballPlayer
+    assert ONTOLOGY.value(members[1], OWL.onProperty) == VIO.careerStation
+    assert ONTOLOGY.value(members[1], OWL.someValuesFrom) == VIO.NationalTeamStation
 
 
 def test_no_sameas_leak():

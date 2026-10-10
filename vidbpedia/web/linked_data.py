@@ -52,9 +52,9 @@ def describe(graph, iri):
 def describe_term(graph, iri):
     """Định nghĩa một thuật ngữ ontology, đủ để đọc được tiên đề.
 
-    Mọi triple đi ra, đi tiếp qua blank node (restriction, danh sách của owl:propertyChainAxiom và
-    owl:members); thêm lớp con, thuộc tính con, nghịch đảo trực tiếp, và các tiên đề mà thuật ngữ nằm
-    trong danh sách (chuỗi thuộc tính của thuộc tính khác, nhóm rời nhau). Chỉ lấy triple có chủ ngữ là
+    Mọi triple đi ra, đi tiếp qua blank node (restriction, danh sách của owl:propertyChainAxiom,
+    owl:members, owl:intersectionOf); thêm lớp con, thuộc tính con, nghịch đảo trực tiếp, và các tiên đề mà
+    thuật ngữ nằm trong danh sách (chuỗi thuộc tính của thuộc tính khác, nhóm rời nhau, phép giao). Chỉ lấy triple có chủ ngữ là
     thuật ngữ thì owl:propertyChainAxiom ( ... ) bị cắt thành danh sách rỗng.
     """
     out = bind_prefixes(Graph())
@@ -82,7 +82,7 @@ def describe_term(graph, iri):
         head = cell
         while (prev := graph.value(predicate=RDF.rest, object=head)) is not None:
             head = prev
-        for p in (OWL.propertyChainAxiom, OWL.members):
+        for p in (OWL.propertyChainAxiom, OWL.members, OWL.intersectionOf):
             for s in graph.subjects(p, head):
                 out.add((s, p, head))
                 walk(head)

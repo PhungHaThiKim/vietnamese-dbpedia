@@ -39,7 +39,7 @@ Mẹo: học cả 5 mảng qua **một thực thể xuyên suốt — Đặng Qu
 | Trên UI thấy | Nhờ tiên đề | Số liệu |
 |---|---|---|
 | Cầu thủ có type `dbo:SoccerPlayer` | `vio:FootballPlayer ⊑ dbo:SoccerPlayer` | 0 → 611 |
-| Nhãn "Cầu thủ đội tuyển" | `∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer` | 0 → 486 |
+| Nhãn "Cầu thủ đội tuyển" | `FootballPlayer ⊓ ∃careerStation.NationalTeamStation ⊑ NationalTeamPlayer` | 0 → 486 |
 | Cạnh `playedFor` nối thẳng tới CLB | property chain `careerStation ∘ team` | 0 → 2.772 |
 | CLB có `hasPlayer` | `owl:inverseOf playedFor` | 2.772 |
 

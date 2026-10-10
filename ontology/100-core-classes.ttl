@@ -15,81 +15,99 @@
 
 # ===== Người =====
 vio:Person a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Người"@vi , "Person"@en ;
   rdfs:subClassOf dbo:Person .
 
 vio:Athlete a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Vận động viên"@vi , "Athlete"@en ;
   rdfs:subClassOf vio:Person , dbo:Athlete .
 
 vio:FootballPlayer a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Cầu thủ bóng đá"@vi , "Football player"@en ;
   rdfs:subClassOf vio:Athlete , dbo:SoccerPlayer .
 
 vio:NationalTeamPlayer a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Cầu thủ từng khoác áo đội tuyển quốc gia"@vi , "National team player"@en ;
   rdfs:comment "Suy ra từ quá trình thi đấu: có ít nhất một NationalTeamStation (mọi lứa tuổi)."@vi ;
   rdfs:subClassOf vio:FootballPlayer .
 
 # ===== Tổ chức =====
 vio:Organisation a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Tổ chức"@vi , "Organisation"@en ;
   rdfs:subClassOf dbo:Organisation .
 
 vio:EducationalInstitution a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Cơ sở giáo dục"@vi , "Educational institution"@en ;
   rdfs:subClassOf vio:Organisation , dbo:EducationalInstitution .
 
 vio:University a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Trường đại học"@vi , "University"@en ;
   rdfs:subClassOf vio:EducationalInstitution , dbo:University .
 
 vio:FootballClub a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Câu lạc bộ bóng đá"@vi , "Football club"@en ;
   rdfs:subClassOf vio:Organisation , dbo:SoccerClub .
 
 vio:NationalFootballTeam a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Đội tuyển bóng đá quốc gia"@vi , "National football team"@en ;
   rdfs:subClassOf vio:Organisation , dbo:NationalSoccerClub .
 
 # ===== Địa điểm =====
 vio:Location a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Địa điểm"@vi , "Location"@en ;
   rdfs:subClassOf dbo:Place .
 
 vio:Country a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Quốc gia"@vi , "Country"@en ;
   rdfs:subClassOf vio:Location , dbo:Country .
 
 vio:Province a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Tỉnh, thành phố trực thuộc trung ương"@vi , "Province"@en ;
   rdfs:comment "Đơn vị hành chính cấp tỉnh, kể cả tỉnh đã giải thể hoặc sáp nhập (xem vio:dissolutionYear)."@vi ;
   rdfs:subClassOf vio:Location , dbo:Province .
 
 vio:FormerProvince a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Tỉnh cũ (đã giải thể, sáp nhập hoặc thuộc chế độ trước)"@vi , "Former province"@en ;
   rdfs:comment "Gán khi Wikidata không còn xếp đơn vị vào 'province of Vietnam' / 'centrally-governed city of Vietnam' (Q2824648, Q1381899) đang hiệu lực, hoặc có năm giải thể (P576)."@vi ;
   rdfs:subClassOf vio:Province .
 
 vio:Stadium a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Sân vận động"@vi , "Stadium"@en ;
   rdfs:subClassOf vio:Location , dbo:Stadium .
 
 # ===== Quá trình thi đấu (mẫu "role at a time", giống dbo:CareerStation) =====
 vio:CareerStation a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Giai đoạn thi đấu"@vi , "Career station"@en ;
   rdfs:comment "Một giai đoạn cầu thủ thi đấu cho một đội: đội, năm bắt đầu, năm kết thúc, số trận, số bàn."@vi ;
   rdfs:subClassOf dbo:CareerStation .
 
 vio:YouthStation a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Giai đoạn đội trẻ"@vi , "Youth career station"@en ;
   rdfs:subClassOf vio:CareerStation .
 
 vio:ClubStation a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Giai đoạn câu lạc bộ"@vi , "Club career station"@en ;
   rdfs:subClassOf vio:CareerStation .
 
 vio:NationalTeamStation a owl:Class ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "Giai đoạn đội tuyển quốc gia"@vi , "National team career station"@en ;
   rdfs:subClassOf vio:CareerStation .
 

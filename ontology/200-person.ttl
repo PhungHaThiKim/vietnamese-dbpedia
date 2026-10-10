@@ -8,27 +8,32 @@
 
 # ===== Thuộc tính của người =====
 vio:birthDate a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "ngày sinh"@vi , "birth date"@en ;
   rdfs:domain vio:Person ; rdfs:range xsd:date ;
   rdfs:subPropertyOf dbo:birthDate , schema:birthDate .
 
 vio:birthYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm sinh"@vi , "birth year"@en ;
   rdfs:comment "Dùng khi nguồn chỉ biết năm sinh."@vi ;
   rdfs:domain vio:Person ; rdfs:range xsd:gYear ;
   rdfs:subPropertyOf dbo:birthYear .
 
 vio:deathDate a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "ngày mất"@vi , "death date"@en ;
   rdfs:domain vio:Person ; rdfs:range xsd:date ;
   rdfs:subPropertyOf dbo:deathDate , schema:deathDate .
 
 vio:birthPlace a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "nơi sinh"@vi , "birth place"@en ;
   rdfs:domain vio:Person ; rdfs:range vio:Location ;
   rdfs:subPropertyOf dbo:birthPlace , schema:birthPlace .
 
 vio:birthProvince a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "tỉnh nơi sinh"@vi , "birth province"@en ;
   rdfs:comment "Nơi sinh quy về cấp tỉnh qua chuỗi Wikidata P19/P131*."@vi ;
   rdfs:domain vio:Person ; rdfs:range vio:Province ;

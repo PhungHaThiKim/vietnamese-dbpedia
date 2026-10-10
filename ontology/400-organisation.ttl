@@ -7,22 +7,26 @@
 
 # ===== Tổ chức (một thuộc tính cho mỗi ý; trước đây bị tách foundingYearOrg/Club, homepageOrg/Edu) =====
 vio:foundingDate a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "ngày thành lập"@vi , "founding date"@en ;
   rdfs:domain vio:Organisation ; rdfs:range xsd:date ;
   rdfs:subPropertyOf dbo:foundingDate .
 
 vio:foundingYear a owl:DatatypeProperty , owl:FunctionalProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "năm thành lập"@vi , "founding year"@en ;
   rdfs:comment "Dùng khi chỉ biết năm thành lập."@vi ;
   rdfs:domain vio:Organisation ; rdfs:range xsd:gYear ;
   rdfs:subPropertyOf dbo:foundingYear .
 
 vio:abbreviation a owl:DatatypeProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "tên viết tắt"@vi , "abbreviation"@en ;
   rdfs:domain vio:Organisation ; rdfs:range xsd:string ;
   rdfs:subPropertyOf dbo:abbreviation .
 
 vio:affiliation a owl:ObjectProperty ;
+  rdfs:isDefinedBy vio: ;
   rdfs:label "trực thuộc / thành viên của"@vi , "affiliation"@en ;
   rdfs:domain vio:Organisation ;
   rdfs:subPropertyOf dbo:affiliation .

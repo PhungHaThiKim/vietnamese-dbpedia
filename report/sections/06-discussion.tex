@@ -1,0 +1,33 @@
+\section{Discussion}
+\label{sec:discussion}
+
+\paragraph{Design decisions.} Besides the selection through Wikidata and the
+two-layer ontology (Sections~\ref{sec:collection} and~\ref{sec:ontology}),
+inferred triples are \emph{materialised and stored separately}, so clients get
+DBpedia types without a reasoner and the interface can mark what is inferred;
+and \emph{one Python process with an in-memory rdflib graph} serves the
+endpoint, the Linked Data routes and the interface. The 131 thousand triples
+load in a few seconds; a triple store such as Virtuoso pays off when the data
+grows.
+
+\paragraph{Limitations.} The current system has six limitations.
+\begin{itemize}
+  \item \emph{Coverage.} 990 entities of one domain, not all of Vietnamese
+        Wikipedia; each new class needs a seed query, ontology terms, an
+        infobox mapping and a build function.
+  \item \emph{Resolvable IRIs.} We do not control \term{vi.dbpedia.org}, so
+        the IRIs dereference only through a running project server; a domain
+        of our own or \term{w3id.org} would make them resolvable on the Web.
+  \item \emph{Link drift.} 44 of the 777 English links do not reach a DBpedia
+        article (Section~\ref{sec:links}); following
+        \term{dbo:wikiPageRedirects} would fix twelve of them.
+  \item \emph{Data gaps.} 129 career stations have no team IRI, 26
+        universities have no province, and page links
+        (\term{dbo:wikiPageWikiLink}) and \term{skos:broader} are not extracted.
+  \item \emph{Serving.} The SPARQL endpoint has no query time limit, because
+        rdflib cannot cancel a running query; a public deployment needs a
+        stoppable process or a triple store that enforces a limit.
+  \item \emph{Question answering.} Its quality depends on the language
+        model and was not measured on a benchmark; the evidence graph is
+        empty when the rows hold one end of each relation.
+\end{itemize}

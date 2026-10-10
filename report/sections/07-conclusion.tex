@@ -1,0 +1,15 @@
+\section{Conclusion}
+\label{sec:conclusion}
+
+We built a DBpedia-style knowledge base for Vietnamese football, provinces and
+universities that covers the five tasks of the assignment: a two-layer OWL
+ontology aligned to the DBpedia Ontology; 990 entities selected through
+Wikidata; 88{,}898 validated triples, which OWL~2~RL reasoning extends to
+131{,}543; 777 links to English DBpedia (733 resolve) and 990 to Wikidata; and
+a SPARQL endpoint, a terminal client, dereferenceable IRIs and a web interface
+with question answering. Reasoning makes the data interoperable: it adds the
+DBpedia types that clients expect and shortcut edges for multi-hop questions.
+
+Future work follows from the limitations: query time limits or a triple store,
+more classes (coaches, competitions) and page links, a link check against
+DBpedia at every build, and a Vietnamese question-answering benchmark.

@@ -1,0 +1,31 @@
+\documentclass{article}
+
+\input{preamble}
+
+\graphicspath{{figures/}}
+
+\begin{document}
+\maketitle
+
+% =========================
+\input{sections/00-abstract}
+
+% =========================
+\input{sections/01-introduction}
+\input{sections/02-related-work}
+\input{sections/03-method}
+\input{sections/04-publishing}
+\input{sections/05-evaluation}
+\input{sections/06-discussion}
+\input{sections/07-conclusion}
+
+% =========================
+% As in NeurIPS papers, the references follow the last section and may be set
+% in \small (9pt).
+\nocite{*}
+{\small
+\bibliographystyle{IEEEtran}
+\bibliography{references}
+}
+
+\end{document}

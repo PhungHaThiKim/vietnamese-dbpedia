@@ -1,0 +1,72 @@
+% Part 2 -- Ha Thi Kim Phung: infobox extraction, transform to 4 stars
+
+% --------- Slide 8: Wikitext to RDF ---------
+\begin{frame}{From Wikitext to RDF}
+    \begin{columns}[T]
+    \column{0.5\textwidth}
+    \textbf{Infobox extraction}
+    \begin{enumerate}
+        \footnotesize
+        \item \textbf{Render} nested templates (dates, heights, lists); drop refs
+        \item \textbf{Parse} Vietnamese values: \term{16.361,2}, \term{2015–},
+              \term{→ (mượn)} (on loan)
+        \item \textbf{Map} keys to \term{vio:} for 5 template families
+        \item \textbf{Choose} Wikidata or infobox per property
+    \end{enumerate}
+    \vspace{0.3em}
+    \footnotesize
+    Career rows \term{years}$n$/\term{clubs}$n$/\term{caps}$n$/\term{goals}$n$
+    $\rightarrow$ \alert{3{,}382} \term{CareerStation}s for 601 players
+
+    \column{0.48\textwidth}
+    \textbf{DBpedia datasets reproduced}
+    \begin{itemize}
+        \footnotesize
+        \item labels (vi, en), abstracts: 990
+        \item page IDs, revisions, provenance
+        \item images: 543
+        \item categories: 9{,}126 links
+        \item redirects: 1{,}274
+        \item external links, homepages, coordinates
+        \item raw infobox \term{vip:}: 24{,}605 triples
+    \end{itemize}
+    \end{columns}
+    \vspace{0.8em}
+    \begin{block}{IRIs keep Unicode, like DBpedia chapters}
+        \footnotesize
+        \term{http://vi.dbpedia.org/resource/Nguyễn\_Công\_Phượng} \;·\; stations
+        \term{…\_\_1}, \term{…\_\_2}, \ldots \;·\; redirects $\rightarrow$
+        \term{skos:altLabel}
+    \end{block}
+\end{frame}
+
+% --------- Slide 9: Transform to 4 stars ---------
+\begin{frame}[fragile]{Transform to 4$\star$: One Infobox, Before and After}
+    \scriptsize
+    \textbf{Before}: wikitext --- open and machine-readable, but text that names nothing with a URI ($\leq 3\star$)
+\begin{Verbatim}[fontsize=\tiny]
+| birth_date  = {{ngày sinh và tuổi|1995|1|21}}
+| birth_place = [[Đô Lương (huyện)|Đô Lương]], [[Nghệ An]], [[Việt Nam]]
+| height      = {{convert|1,69|m}}
+| years2 = 2016  | clubs2 = → [[Mito HollyHock]] (mượn)  | caps2 = 5  | goals2 = 0
+\end{Verbatim}
+    \vspace{-0.3em}
+    \begin{center}$\Downarrow$\; \texttt{python -m vidbpedia build}\end{center}
+    \vspace{-0.6em}
+    \textbf{After}: RDF with an HTTP IRI for every thing (4$\star$)
+\begin{Verbatim}[fontsize=\tiny]
+vres:Nguyễn_Công_Phượng a vio:FootballPlayer ;
+    vio:birthDate "1995-01-21"^^xsd:date ;
+    vio:birthPlace vres:Đô_Lương_\(huyện\) ;  vio:birthProvince vres:Nghệ_An ;
+    vio:height 1.68e+00 ;                      # xsd:double; Wikidata wins over 1,69
+    vio:careerStation vres:Nguyễn_Công_Phượng__3 .
+vres:Nguyễn_Công_Phượng__3 a vio:ClubStation ;
+    vio:team vres:Mito_HollyHock ;  vio:onLoan true ;
+    vio:startYear "2016"^^xsd:gYear ;  vio:endYear "2016"^^xsd:gYear ;
+    vio:appearances "5"^^xsd:nonNegativeInteger ;
+    vio:goals "0"^^xsd:nonNegativeInteger .
+\end{Verbatim}
+    \hl{IRIs} for the player, places, clubs and the loan spell itself \;·\;
+    \hl{typed literals} (\term{xsd:date}, \term{gYear}, \term{nonNegativeInteger}, \term{boolean}) \;·\;
+    links and templates \hl{interpreted} \;·\; \hl{shared vocabularies} (\term{vio:} $\sqsubseteq$ \term{dbo:})
+\end{frame}

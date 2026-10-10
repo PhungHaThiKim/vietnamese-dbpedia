@@ -1,0 +1,97 @@
+% RDFS graph of the vio: ontology in the lecture style: ellipses for resources,
+% rdfs:Class / rdf:Property at the top, the schema above a horizontal line and
+% instance data below it, rdf:type edges crossing the line.
+% An excerpt: the full class hierarchy is in the report's class table.
+%
+% Shared by report/ (\input{figures/rdfs_graph}) and slides/
+% (\input{../report/figures/rdfs_graph}). The including preamble defines the
+% colours rdfsdraw, rdfsfill (instances), rdfsprop (properties) and rdfsaxiom
+% (entailed triples).
+\begin{tikzpicture}[
+    % absolute font sizes, so the figure looks the same in the report (10pt) and in beamer (11pt)
+    font=\fontsize{7}{8.5}\selectfont, >={Stealth[length=1.7mm]},
+    res/.style={ellipse, draw=black!80, fill=white, inner sep=1pt, minimum height=0.72cm,
+                font=\fontsize{7}{8.5}\selectfont\ttfamily},
+    meta/.style={res, fill=black!8, draw=black!60},
+    dbo/.style={res, dashed, draw=black!55, text=black!70},
+    prp/.style={res, draw=rdfsprop, text=rdfsprop},
+    dboprp/.style={prp, dashed},
+    inst/.style={res, fill=rdfsfill, draw=rdfsdraw},
+    e/.style={->, black!80},
+    typ/.style={->, black!45},
+    dr/.style={->, rdfsprop},
+    lbl/.style={font=\fontsize{5}{6}\selectfont\itshape, fill=white, inner sep=0.8pt},
+  ]
+  % ---- RDFS vocabulary ----
+  \node[meta] (class)    at (4.7,1.75)  {rdfs:Class};
+  \node[meta] (property) at (10.6,1.75) {rdf:Property};
+
+  % ---- classes ----
+  \node[dbo] (dboanimal) at (1.8,1.75)  {dbo:Animal};
+  \node[dbo] (dboperson) at (1.8,0.35)  {dbo:Person};
+  \node[res] (person)    at (1.8,-1.05) {vio:Person};
+  \node[res] (athlete)   at (1.8,-2.45) {vio:Athlete};
+  \node[res] (fp)        at (1.8,-3.85) {vio:FootballPlayer};
+  \node[res] (cs)        at (6.2,-2.45) {vio:CareerStation};
+  \node[res] (club)      at (6.2,-3.85) {vio:ClubStation};
+  \node[res] (org)       at (10.4,-2.45) {vio:Organisation};
+  \node[res] (fc)        at (10.4,-3.85) {vio:FootballClub};
+  \node[res] (loc)       at (14.7,-2.45) {vio:Location};
+  \node[res] (prov)      at (14.7,-3.85) {vio:Province};
+
+  % ---- properties ----
+  \node[prp]    (cstation)  at (6.2,0.35)   {vio:careerStation};
+  \node[prp]    (bplace)    at (10.6,0.35)  {vio:birthPlace};
+  \node[dboprp] (dbobplace) at (15.0,0.35)  {dbo:birthPlace};
+  \node[prp]    (bprov)     at (10.6,-1.05) {vio:birthProvince};
+
+  % ---- instance data ----
+  \node[inst] (cp)   at (1.8,-6.0)  {vres:Nguyễn\_Công\_Phượng};
+  \node[inst] (st2)  at (6.2,-6.0)  {vres:…\_\_2};
+  \node[inst] (hagl) at (10.4,-6.0) {vres:…Hoàng\_Anh\_Gia\_Lai};
+  \node[inst] (na)   at (14.7,-6.0) {vres:Nghệ\_An};
+
+  % ---- schema / data line ----
+  \draw[black!45, thick] (-0.9,-4.95) -- (16.7,-4.95);
+  \node[lbl, fill=none, text=black!55, anchor=south west, inner sep=2pt] at (-0.9,-4.95) {schema (RDFS)};
+  \node[lbl, fill=none, text=black!55, anchor=north west, inner sep=2pt] at (-0.9,-4.95) {data (RDF)};
+
+  % ---- rdfs:subClassOf ----
+  \draw[e] (dboperson) -- node[lbl, right] {rdfs:subClassOf} (dboanimal);
+  \draw[e] (person)  -- node[lbl, right] {rdfs:subClassOf} (dboperson);
+  \draw[e] (athlete) -- node[lbl, right] {rdfs:subClassOf} (person);
+  \draw[e] (fp)      -- node[lbl, right] {rdfs:subClassOf} (athlete);
+  \draw[e] (club)    -- node[lbl, right] {rdfs:subClassOf} (cs);
+  \draw[e] (fc)      -- node[lbl, right] {rdfs:subClassOf} (org);
+  \draw[e] (prov)    -- node[lbl, right] {rdfs:subClassOf} (loc);
+
+  % ---- rdfs:subPropertyOf ----
+  \draw[e] (bprov)  -- node[lbl, right] {rdfs:subPropertyOf} (bplace);
+  \draw[e] (bplace) -- node[lbl, above] {rdfs:subPropertyOf} (dbobplace);
+
+  % ---- rdf:type to the RDFS vocabulary ----
+  \draw[typ] (person.north east) -- node[lbl, sloped, above] {rdf:type} (class.south west);
+  \draw[typ] (cstation) -- node[lbl, sloped, above] {rdf:type} (property);
+  \draw[typ] (bplace) -- node[lbl, right] {rdf:type} (property);
+  \draw[typ] (dbobplace) -- node[lbl, sloped, above] {rdf:type} (property);
+
+  % ---- rdfs:domain / rdfs:range ----
+  \draw[dr] (cstation.south west) -- node[lbl, sloped, above, text=rdfsprop] {rdfs:domain} (fp.north east);
+  \draw[dr] (cstation) -- node[lbl, right, text=rdfsprop, pos=0.45] {rdfs:range} (cs);
+  \draw[dr] (bprov.south east) -- node[lbl, sloped, above, text=rdfsprop] {rdfs:range} (prov.north west);
+
+  % ---- instance triples ----
+  \draw[e] (cp) -- node[lbl, above] {vio:careerStation} (st2);
+  \draw[e] (st2) -- node[lbl, above] {vio:team} (hagl);
+  \draw[e] (cp.south) -- ++(0,-0.55) -| node[lbl, pos=0.25] {vio:birthProvince} (na.south);
+
+  % ---- rdf:type across the line ----
+  \draw[typ] (cp)   -- node[lbl, right] {rdf:type} (fp);
+  \draw[typ] (st2)  -- node[lbl, right] {rdf:type} (club);
+  \draw[typ] (hagl) -- node[lbl, right] {rdf:type} (fc);
+  \draw[typ] (na)   -- node[lbl, right] {rdf:type} (prov);
+
+  % ---- a triple entailed by RDFS (rdfs9: type propagates up subClassOf) ----
+  \draw[->, rdfsaxiom, dashed, thick] (cp.west) to[out=170, in=190, looseness=1.15]
+      node[lbl, text=rdfsaxiom, sloped, above, pos=0.5] {rdf:type (entailed)} (dboperson.west);
+\end{tikzpicture}

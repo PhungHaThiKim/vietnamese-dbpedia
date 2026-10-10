@@ -1,0 +1,118 @@
+% Part 3 -- Bui Duc Phan Hoang: links to DBpedia, dereferenceable IRIs, five stars
+
+% --------- Slide 12: Links to English DBpedia ---------
+\begin{frame}{Linking to English DBpedia (5$\star$)}
+    \begin{columns}[T]
+    \column{0.5\textwidth}
+    \textbf{How}
+    \begin{itemize}
+        \footnotesize
+        \item Wikidata item $\rightarrow$ its English sitelink $\rightarrow$
+              \term{owl:sameAs dbr:<title>}
+        \item no matching by label, which is ambiguous for Vietnamese names
+        \item all 990 entities also $\rightarrow$ \term{wd:Q…}
+        \item validation: no list/disambiguation targets, no shared targets
+        \item described as two VoID linksets
+    \end{itemize}
+    \vspace{0.3em}
+    \scriptsize
+    \begin{tabular}{@{}lr@{}}
+        \toprule
+        Class & Linked / total \\
+        \midrule
+        Players       & 508 / 611 \\
+        Clubs, national teams & 70 / 71 \\
+        Stadiums      & 25 / 29 \\
+        Universities  & 89 / 168 \\
+        Provinces, country & 85 / 111 \\
+        \midrule
+        Total         & \alert{777 / 990} \\
+        \bottomrule
+    \end{tabular}
+
+    \column{0.48\textwidth}
+    \textbf{Checked on the live DBpedia}
+    \vspace{0.3em}
+
+    \scriptsize
+    \begin{tabular}{@{}lrr@{}}
+        \toprule
+        \term{dbr:} target & Links & Share \\
+        \midrule
+        Article       & \alert{733} & 94.3\% \\
+        Redirect      & 12  & 1.5\% \\
+        Not in DBpedia & 32 & 4.1\% \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.5em}
+    \footnotesize
+    Our titles come from today's English Wikipedia; DBpedia is an older
+    snapshot (16 of the 32 missing targets are clubs)
+
+    \vspace{0.5em}
+    Confirms DBpedia uses the \alert{same Unicode IRIs}, e.g.\
+    \term{dbr:Đặng\_Văn\_Lâm}
+    \end{columns}
+\end{frame}
+
+% --------- Slide 13: Dereferenceable IRIs ---------
+\begin{frame}[fragile]{Dereferenceable IRIs: 303 and Content Negotiation}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+        \toprule
+        Route & Response \\
+        \midrule
+        \term{/resource/\{name\}} & 303 $\rightarrow$ HTML page, or $\rightarrow$
+            \term{/data/\{name\}.ext} when \term{Accept} asks for RDF \\
+        \term{/page/\{name\}}     & 303 $\rightarrow$ HTML page, like \term{dbpedia.org/page/…} \\
+        \term{/data/\{name\}.ext} & triples about the resource: \term{.ttl}, \term{.nt}, \term{.jsonld}, \term{.rdf} \\
+        \term{/ontology/\{term\}} & definition of a \term{vio:} term, in Turtle \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.6em}
+    Recorded on the running server:
+\begin{Verbatim}[fontsize=\tiny]
+$ curl -si -H "Accept: text/turtle" \
+       http://127.0.0.1:7860/resource/Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng
+HTTP/1.1 303 See Other
+vary: Accept
+location: /data/Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng.ttl
+
+$ curl -sL -H "Accept: text/turtle" http://127.0.0.1:7860/resource/Nguy%E1%BB%85n_…
+vres:Nguyễn_Công_Phượng a dbo:Animal, dbo:Athlete, dbo:Person, dbo:SoccerPlayer, … ;
+    dbo:birthDate "1995-01-21"^^xsd:date ;
+    …
+    vio:birthProvince vres:Nghệ_An ;
+    …
+    owl:sameAs dbr:Nguyễn_Công_Phượng, wd:Q18045362 ;
+\end{Verbatim}
+    \scriptsize
+    Headers and Turtle abridged. Browsers get the resource page at \term{/?resource=<name>}, a shareable URL.
+    Clients must percent-encode the Vietnamese characters, as browsers do.
+\end{frame}
+
+% --------- Slide 14: Five stars ---------
+\begin{frame}{Five Stars, Checked}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+        \toprule
+        Star & Evidence \\
+        \midrule
+        $\star$ open licence & CC BY-SA 4.0 in the VoID description and the ontology; dumps in a Git repository \\
+        $\star\star$ machine-readable & RDF triples, not text or tables \\
+        $\star\star\star$ open formats & Turtle and N-Triples dumps; each resource also as JSON-LD and RDF/XML \\
+        $\star\star\star\star$ URIs & an HTTP IRI for every entity, station, category and redirect; dereferenced with 303 + content negotiation \\
+        $\star\star\star\star\star$ linked & \hl{777} \term{owl:sameAs} to DBpedia (733 verified), \hl{990} to Wikidata; classes and properties $\sqsubseteq$ \term{dbo:} \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.8em}
+    \begin{block}{Caveat on the fourth star}
+        \footnotesize
+        The \term{vi.dbpedia.org} namespace follows the DBpedia-chapter convention,
+        but we do not own that domain: the IRIs resolve only through our running
+        server (\term{http://127.0.0.1:7860/resource/…}).
+    \end{block}
+\end{frame}

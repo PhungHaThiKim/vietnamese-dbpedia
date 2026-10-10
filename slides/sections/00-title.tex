@@ -1,0 +1,35 @@
+% --------- Slide 1: Title (HUST-branded, full bleed) ---------
+% figures/hust_title.png is the HUST cover of the thesis deck with its text
+% removed (logo, dot ring and motto kept); the text is set here instead.
+{
+\setbeamertemplate{footline}{}          % no footer on the cover
+\begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[anchor=center] at (current page.center)
+            {\includegraphics[width=\paperwidth, height=\paperheight]{figures/hust_title.png}};
+        \node[anchor=north west, text=hustdark, font=\footnotesize\bfseries]
+            at ($(current page.north west) + (7mm, -24mm)$)
+            {SEMANTIC WEB \,·\, TOPIC 2};
+        \node[anchor=north west, text=hustred, font=\fontsize{26}{28}\selectfont\bfseries]
+            at ($(current page.north west) + (6.4mm, -29mm)$)
+            {Vietnamese DBpedia};
+        \node[anchor=north west, text=hustred, font=\large, text width=96mm, align=left]
+            at ($(current page.north west) + (7mm, -44mm)$)
+            {Building a DBpedia version\\ for the Vietnamese language};
+        \node[anchor=north west, text=hustred, font=\small\bfseries, align=left]
+            at ($(current page.north west) + (7mm, -56mm)$)
+            {Group 23};
+        \node[anchor=north west, text=hustred, font=\footnotesize, align=left, inner sep=0pt]
+            at ($(current page.north west) + (9.2mm, -62.5mm)$)
+            {\begin{tabular}{@{}l@{\hspace{1.2em}}l@{}}
+                Ha Thi Kim Phung   & 20242460M \\
+                Do Ngoc Trung      & 20232311M \\
+                Bui Duc Phan Hoang & 20252004M \\
+                Do Hoang Dung      & 20241184M
+             \end{tabular}};
+        \node[anchor=north west, text=hustred, font=\small\bfseries, align=left]
+            at ($(current page.north west) + (7mm, -79mm)$)
+            {Lecturer: Dr.~Do Ba Lam};
+    \end{tikzpicture}
+\end{frame}
+}

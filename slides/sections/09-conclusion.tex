@@ -1,0 +1,35 @@
+% Part 4 -- Do Hoang Dung: conclusion and closing
+
+% --------- Slide 19: Conclusion ---------
+\begin{frame}{Conclusion}
+    \begin{block}{A Vietnamese DBpedia for football, provinces and universities}
+        \small
+        Ontology \term{vio:} (18 classes, 54 properties) aligned with DBpedia;
+        990 Vietnamese articles $\rightarrow$ \alert{131{,}233 triples}, 0 validation errors
+    \end{block}
+    \begin{block}{Reasoning makes it interoperable}
+        \small
+        OWL\,2\,RL adds the DBpedia types and properties clients expect, and
+        shortcut edges for multi-hop questions (\term{playedFor}: 0 $\rightarrow$ 2{,}772)
+    \end{block}
+    \begin{block}{Five-star Linked Data with a query interface}
+        \small
+        777 links to English DBpedia (733 verified live), 990 to Wikidata;
+        303 + content negotiation, SPARQL editor, questions in Vietnamese
+    \end{block}
+    \vspace{0.4em}
+    \begin{center}
+    \alert{Code and data:} \texttt{github.com/PhungHaThiKim/vietnamese-dbpedia}
+    \end{center}
+\end{frame}
+
+% --------- Slide 20: Q&A (HUST-branded, full bleed) ---------
+{
+\setbeamertemplate{footline}{}          % no footer on the closing
+\begin{frame}[plain]
+    \begin{tikzpicture}[remember picture, overlay]
+        \node[anchor=center] at (current page.center)
+            {\includegraphics[width=\paperwidth, height=\paperheight]{figures/hust_closing.png}};
+    \end{tikzpicture}
+\end{frame}
+}

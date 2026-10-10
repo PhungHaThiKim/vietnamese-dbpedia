@@ -1,0 +1,64 @@
+% Part 3 -- Bui Duc Phan Hoang: web interface and question answering
+% (the live web demo follows slide 16 and belongs to Part 4, Do Hoang Dung)
+
+% --------- Slide 15: Web interface ---------
+\begin{frame}{Web Interface: Four Tabs}
+    \centering
+    \includegraphics[height=5.1cm]{ui_resource.png}\hfill
+    \includegraphics[height=5.1cm]{ui_sparql.png}
+
+    \vspace{0.5em}
+    \raggedright
+    \footnotesize
+    \begin{itemize}
+        \item \textbf{Resource tree}: 8{,}624 resources under the \term{vio:} class tree
+        \item \textbf{Resource} (left): page like \term{dbpedia.org/page/…}; classes marked
+              \emph{khai báo} (asserted) or \emph{suy luận} (inferred); graph and relation tree
+        \item \textbf{Question answering}: ask in Vietnamese (next slide)
+        \item \textbf{SPARQL} (right): editor, 19 prefixes, 9 example queries, table/JSON/CSV
+    \end{itemize}
+\end{frame}
+
+% --------- Slide 16: Question answering ---------
+\begin{frame}{Question Answering: the LLM Writes SPARQL}
+    \centering
+    \adjustbox{max width=\textwidth}{%
+    \begin{tikzpicture}[
+        font=\scriptsize, >={Stealth[length=1.8mm]},
+        box/.style={draw=black!55, rounded corners=2pt, align=center, text width=2.6cm,
+                    minimum height=1.1cm, inner sep=3pt},
+        stage/.style={box, draw=hustred, fill=hustlight, line width=0.8pt},
+        io/.style={box, fill=black!7},
+        flow/.style={->, black!60, thick},
+      ]
+      \node[io]                            (q)   {Question\\ in Vietnamese};
+      \node[stage, right=0.5cm of q]       (pr)  {Prompt: schema\\ summary, rules,\\ 6 examples};
+      \node[stage, right=0.5cm of pr]      (llm) {LLM\\ (any OpenAI-\\compatible API)};
+      \node[io, right=0.5cm of llm]        (sp)  {SPARQL query};
+      \node[stage, below=0.9cm of sp]      (val) {Validate:\\ only \texttt{SELECT}\\ or \texttt{ASK}};
+      \node[stage, left=0.5cm of val]      (run) {Run on the\\ rdflib graph};
+      \node[stage, left=0.5cm of run]      (ans) {LLM answers\\ from at most\\ 30 rows};
+      \node[io, left=0.5cm of ans]         (out) {Answer +\\ reasoning};
+      \draw[flow] (q) -- (pr);
+      \draw[flow] (pr) -- (llm);
+      \draw[flow] (llm) -- (sp);
+      \draw[flow] (sp) -- (val);
+      \draw[flow] (val) -- (run);
+      \draw[flow] (run) -- (ans);
+      \draw[flow] (ans) -- (out);
+      \draw[->, hustred, dashed, thick] (run.north) -- node[right, font=\tiny, text=hustred, align=left]
+            {error or 0 rows:\\ repair once} (llm.south);
+    \end{tikzpicture}}
+
+    \vspace{0.8em}
+    \raggedright
+    \begin{itemize}
+        \footnotesize
+        \item \textbf{SPARQL mode}: show the query and the raw rows, skip the answer call
+        \item \textbf{Entity lookup by name in a subquery}: rdflib applies
+              \term{FILTER} after the join, so the Công Phượng career query
+              drops from \alert{10.7\,s to 0.27\,s}
+        \item Works with OpenAI, Gemini or a local Ollama model (\term{.env});
+              tests use a stubbed model, no API key needed
+    \end{itemize}
+\end{frame}

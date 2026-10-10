@@ -1,0 +1,58 @@
+% Part 4 -- Do Hoang Dung: live web demo (before slide 17), competency questions,
+% limitations and future work
+
+% --------- Slide 17: Dataset and competency questions ---------
+\begin{frame}{Evaluation: Dataset and Competency Questions}
+    \centering
+    \begin{tabular}{@{}cccc@{}}
+        {\Large\bfseries\color{hustred} 131{,}233} & {\Large\bfseries\color{hustred} 990} &
+        {\Large\bfseries\color{hustred} 3{,}382} & {\Large\bfseries\color{hustred} 0} \\[-0.2em]
+        \scriptsize triples & \scriptsize entities & \scriptsize career stations & \scriptsize validation errors \\
+    \end{tabular}
+
+    \vspace{0.2em}
+    \scriptsize 88{,}898 asserted + 41{,}730 inferred + 549 ontology + 56 VoID
+
+    \vspace{0.6em}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}p{3.2cm}l@{}}
+        \toprule
+        Question & Answer from the graph & Relies on \\
+        \midrule
+        How many provinces are there now? & \hl{34} (76 former) & \term{FormerProvince} \\
+        Which unit succeeded Hà Tây? & Hà Nội & \term{successor} \\
+        Which teams has Công Phượng played for? & 11 teams, 7 club stations & property chain \\
+        Which provinces have the most players? & Nghệ An 58, Hà Nội 48, Thanh Hóa 42 & \term{birthProvince} \\
+        How many universities are in Hà Nội? & 54 & \term{province} \\
+        Who is ``Công Phượng''? & Nguyễn Công Phượng & redirect \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{0.4em}
+    \scriptsize Every question is an automated test on the real data (lower bounds,
+    so tests survive a re-crawl)
+\end{frame}
+
+% --------- Slide 18: Limitations and future work ---------
+\begin{frame}{Limitations and Future Work}
+    \begin{block}{Limitations}
+        \footnotesize
+        \begin{itemize}
+            \item One domain, 990 entities --- each new class needs a seed query,
+                  ontology terms, a mapping and a build function
+            \item 44 of 777 DBpedia links are stale (12 redirects, 32 missing)
+            \item 129 career stations without a team IRI; 26 universities without a province
+            \item No SPARQL 1.1 Protocol endpoint (\term{/sparql}), no query time limit,
+                  \term{SERVICE} not blocked
+            \item Question answering not measured on a question benchmark
+        \end{itemize}
+    \end{block}
+    \begin{block}{Future work}
+        \footnotesize
+        \begin{itemize}
+            \item \term{/sparql} endpoint with time limits; follow DBpedia redirects at build time
+            \item More classes (coaches, competitions) and page links (\term{dbo:wikiPageWikiLink})
+            \item A benchmark of Vietnamese questions for the question-answering tab
+        \end{itemize}
+    \end{block}
+\end{frame}

@@ -1,0 +1,42 @@
+% Part 2 -- Ha Thi Kim Phung: ontology and OWL axioms
+
+% --------- Slide 6: RDFS graph ---------
+\begin{frame}{Ontology \texttt{vio:} as an RDFS Graph}
+    \centering
+    \adjustbox{max width=\textwidth, max height=0.74\textheight}{\input{../report/figures/rdfs_graph}}
+
+    \vspace{0.3em}
+    \scriptsize
+    Excerpt: 18 classes and 54 properties in total, every class $\sqsubseteq$ a \term{dbo:} class
+    \;·\; \textcolor{hustred}{dashed: \term{rdf:type dbo:Person} entailed by RDFS}
+\end{frame}
+
+% --------- Slide 7: Axioms ---------
+\begin{frame}{OWL Axioms Do the Work}
+    \scriptsize
+    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xl@{}}
+        \toprule
+        Axiom & Definition & After reasoning \\
+        \midrule
+        Property chain & $\term{careerStation} \circ \term{team} \sqsubseteq \term{playedFor}$
+            & \hl{2{,}772} player--team edges \\[0.3em]
+        Inverse & $\term{hasPlayer} \equiv \term{playedFor}^{-}$
+            & clubs list their players \\[0.3em]
+        $\exists$ restriction & $\exists\,\term{careerStation}.\term{NationalTeamStation} \sqsubseteq \term{NationalTeamPlayer}$
+            & \hl{486} national-team players \\[0.3em]
+        $\forall$ restriction & $\term{ClubStation} \sqsubseteq \forall\,\term{team}.\term{FootballClub}$
+            & \hl{154} more clubs typed \\[0.3em]
+        Alignment & every \term{vio:} class, 38 properties $\sqsubseteq$ \term{dbo:}
+            & \term{dbo:Person}: 0 $\rightarrow$ \hl{659} \\[0.3em]
+        Disjointness & 4 \term{owl:AllDisjointClasses}
+            & caught \hl{2 modelling bugs} \\
+        \bottomrule
+    \end{tabularx}
+
+    \vspace{1em}
+    \begin{block}{Designed from competency questions}
+        \footnotesize
+        ``Which clubs has a player played for?'' \;·\; ``How many provinces are there now?''
+        \;·\; ``Which clubs play at home in Hà Nội?'' --- each is now an automated test
+    \end{block}
+\end{frame}

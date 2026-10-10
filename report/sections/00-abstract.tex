@@ -1,0 +1,29 @@
+% =========================
+\begin{abstract}
+DBpedia turns the semi-structured content of Wikipedia into Linked Data that
+can be queried with SPARQL and joined with other datasets. This report
+describes a DBpedia-style knowledge base for Vietnamese built from Vietnamese
+Wikipedia and Wikidata for a closed but densely connected domain: Vietnamese
+football (players, clubs, national teams and stadiums), provinces and
+universities. We (i)~define an OWL ontology, \term{vio:}, with 18 classes and
+54 properties, each class aligned to a DBpedia Ontology ancestor; (ii)~select
+990 entities through the Wikidata Query Service and collect their Vietnamese
+articles through the MediaWiki API; (iii)~transform abstracts, infoboxes,
+categories and redirects into 88{,}898 RDF triples with stable IRIs that the
+project server dereferences, validated by eight quality checks and expanded by OWL~2~RL reasoning to
+131{,}543 triples; (iv)~link 777 entities to English DBpedia and all 990 to
+Wikidata with \term{owl:sameAs}, described as VoID linksets; and (v)~serve the
+data through a SPARQL~1.1 Protocol endpoint, a command-line query client and a
+web application with a SPARQL editor, DBpedia-style entity pages, HTTP
+content negotiation and question answering in which a large language model
+writes the SPARQL query and each step is shown. Reasoning lets the data be queried with
+the DBpedia vocabulary (0 asserted \term{dbo:Person} instances become 659) and
+answers multi-hop questions such as ``which clubs has a player played for''
+through a property chain. Checked against the live DBpedia endpoint, 733 of
+the 777 English links resolve to an article. The code, data and 152 automated
+tests are available at
+\url{https://github.com/PhungHaThiKim/vietnamese-dbpedia}.
+\end{abstract}
+
+\noindent\textbf{Key words:} DBpedia; Linked Open Data; Vietnamese Wikipedia;
+ontology; OWL~2~RL; SPARQL; Wikidata; knowledge graph question answering

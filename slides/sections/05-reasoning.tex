@@ -1,0 +1,110 @@
+% Slide 10 closes Part 2 -- Ha Thi Kim Phung: one entity
+% Slide 11 opens Part 3 -- Bui Duc Phan Hoang: validation and reasoning
+
+% --------- Slide 10: One entity ---------
+\begin{frame}{One Entity, End to End}
+    \centering
+    \adjustbox{max width=\textwidth}{%
+    \begin{tikzpicture}[
+        font=\scriptsize, >={Stealth[length=1.6mm]},
+        ent/.style={draw=black!50, rounded corners=2pt, fill=white, align=center,
+                    text width=2.55cm, inner sep=2.5pt},
+        inf/.style={ent, draw=hustred, dashed},
+        lod/.style={ent, draw=accblue, dashed, text width=3.3cm},
+        asr/.style={->, accgray},
+        der/.style={->, hustred, dashed, thick},
+        same/.style={->, accblue, thick},
+        lbl/.style={font=\tiny, fill=white, inner sep=1pt},
+      ]
+      \node[ent, fill=hustlight, draw=hustred, text width=4cm] (cp) at (0,0)
+            {\texttt{vres:Nguyễn\_Công\_Phượng}\\ vio:FootballPlayer};
+      \node[ent, text width=2.85cm] (s2) at (4.55,1.05)  {\texttt{…\_\_2}: ClubStation\\ 2015–2023\\ 103 apps, 36 goals};
+      \node[ent, text width=2.85cm] (s3) at (4.55,-1.05) {\texttt{…\_\_3}: ClubStation\\ 2016, on loan\\ 5 apps, 0 goals};
+      \node[ent] (hagl) at (8.0,1.05)  {Hoàng Anh Gia Lai\\ vio:FootballClub};
+      \node[ent] (mito) at (8.0,-1.05) {Mito HollyHock\\ \textcolor{hustred}{vio:FootballClub (inferred)}};
+      \node[ent] (pleiku) at (11.2,1.05) {Sân vận động Pleiku\\ vio:Stadium};
+      \node[ent] (gl) at (11.2,-1.05) {Gia Lai\\ vio:Province};
+      \node[ent] (na) at (-1.0,-2.1) {Nghệ An\\ vio:Province};
+      \node[inf, text width=3.3cm] (types) at (0,2.05) {dbo:SoccerPlayer, dbo:Person,\\ vio:NationalTeamPlayer};
+      \node[lod] (dbr) at (4.55,-2.7) {\texttt{dbr:Nguyễn\_Công\_Phượng}};
+      \node[lod] (wd)  at (4.55,-3.45) {\texttt{wd:Q18045362}};
+
+      \draw[asr] (cp.east) -- node[lbl, sloped, pos=0.6] {careerStation} (s2.west);
+      \draw[asr] (cp.east) -- node[lbl, sloped, pos=0.6] {careerStation} (s3.west);
+      \draw[asr] (s2) -- node[lbl] {team} (hagl);
+      \draw[asr] (s3) -- node[lbl] {team} (mito);
+      \draw[asr] (hagl) -- node[lbl] {ground} (pleiku);
+      \draw[asr] (pleiku) -- node[lbl] {province} (gl);
+      \draw[asr] (na.north |- cp.south) -- node[lbl] {birthProvince} (na.north);
+      \draw[der] (cp.north) -- node[lbl, text=hustred] {rdf:type} (types.south);
+      \draw[der] (1.7,0 |- cp.north) .. controls (3.0,2.65) and (7.0,2.65) ..
+            node[lbl, text=hustred] {playedFor} (hagl.north);
+      \draw[der] (1.7,0 |- cp.south) .. controls (3.0,-2.35) and (7.0,-2.35) ..
+            node[lbl, text=hustred] {playedFor} (mito.south);
+      \draw[same] (1.2,0 |- cp.south) |- node[lbl, text=accblue, pos=0.75] {owl:sameAs} (dbr.west);
+      \draw[same] (1.2,0 |- cp.south) |- node[lbl, text=accblue, pos=0.75] {owl:sameAs} (wd.west);
+    \end{tikzpicture}}
+
+    \vspace{0.6em}
+    \footnotesize
+    \begin{tabular}{@{}l@{\quad}l@{\quad}l@{}}
+        \textcolor{accgray}{\rule[0.5ex]{1.2em}{0.8pt}} asserted &
+        \textcolor{hustred}{\rule[0.5ex]{0.4em}{0.8pt}\,\rule[0.5ex]{0.4em}{0.8pt}} inferred by OWL\,2\,RL &
+        \textcolor{accblue}{\rule[0.5ex]{1.2em}{1.2pt}} link to another dataset
+    \end{tabular}
+
+    \vspace{0.3em}
+    2 of the player's 11 career stations; \term{hasPlayer} edges omitted
+\end{frame}
+
+% --------- Slide 11: Validation and reasoning ---------
+\begin{frame}{Validation and OWL\,2\,RL Reasoning}
+    \begin{columns}[T]
+    \column{0.42\textwidth}
+    \textbf{8 checks before export}
+    \vspace{0.2em}
+
+    \scriptsize
+    TBox (kinds, \term{dbo:} ancestors, labels) \;·\; object vs.\ datatype
+    values \;·\; literal ranges \;·\; required fields \;·\; functional
+    properties \;·\; object ranges \;·\; \term{owl:sameAs} targets \;·\;
+    plausible values
+
+    \vspace{0.5em}
+    \small
+    \alert{0 errors, 0 warnings}\\
+    47 tests pass
+
+    \column{0.56\textwidth}
+    \textbf{What reasoning adds} \;\scriptsize(+41{,}730 triples, 117\,s)
+    \vspace{0.3em}
+
+    \scriptsize
+    \begin{tabular}{@{}lrr@{}}
+        \toprule
+        Query & Asserted & Published \\
+        \midrule
+        \term{?x a dbo:Person}       & 0 & \alert{659} \\
+        \term{?x a dbo:SoccerPlayer} & 0 & 611 \\
+        \term{?x a dbo:Place}        & 0 & 370 \\
+        \term{?x vio:playedFor ?t}   & 0 & \alert{2{,}772} \\
+        \term{?t vio:hasPlayer ?x}   & 0 & 2{,}772 \\
+        \term{?x dbo:team ?t}        & 0 & 3{,}699 \\
+        \bottomrule
+    \end{tabular}
+
+    \vspace{0.3em}
+    Input: types and \term{vio:} triples only; no \term{sameAs},
+    functional or cardinality axioms
+    \end{columns}
+
+    \vspace{0.6em}
+    \begin{block}{Reasoning caught two modelling bugs}
+        \scriptsize
+        (1) National teams inferred as \emph{clubs}, a disjointness violation
+        $\rightarrow$ domain of \term{ground}/\term{manager} changed to
+        \term{Organisation}.\\
+        (2) ``Clubs at home in Hà Nội'' returned clubs from Đà Nẵng
+        $\rightarrow$ removed \term{tenant} $\equiv$ \term{ground}$^{-}$.
+    \end{block}
+\end{frame}

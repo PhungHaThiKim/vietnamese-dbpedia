@@ -1,0 +1,10 @@
+# File phụ của LaTeX; giữ main.pdf
+*.aux
+*.bbl
+*.blg
+*.fdb_latexmk
+*.fls
+*.log
+*.lol
+*.out
+*.synctex.gz

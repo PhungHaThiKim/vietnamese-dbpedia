@@ -1,0 +1,40 @@
+\section{Background and Related Work}
+\label{sec:related}
+
+\paragraph{DBpedia.} DBpedia~\cite{auer2007dbpedia, lehmann2015dbpedia} extracts
+labels, abstracts, page identifiers, images, categories, redirects, external
+links, coordinates and infobox data from every Wikipedia article. Infobox data
+is published raw, as properties of the generic \term{dbp:} namespace, and
+mapping-based, through community mappings to the hand-built DBpedia Ontology
+(\term{dbo:}), which is cleaner but covers less. Resources are named after
+their article titles, and language chapters publish their own edition under
+their own namespace with links to the English one. Kontokostas et
+al.~\cite{kontokostas2012greek} describe what this raises for the Greek
+chapter: IRIs in a non-Latin script, language-specific templates and links
+across editions. We follow this model for Vietnamese, with a small ontology
+where DBpedia lacks the terms we need.
+
+\paragraph{Linked Data.} The Linked Data principles ask for HTTP URIs that return
+RDF when looked up and link to other
+URIs~\cite{bernerslee2006linked, heath2011linked}. The five-star scheme grades
+open data, and Tasks~3 and~4 correspond to its fourth and fifth stars. We serve
+the data with \emph{303 See Other} redirects and content
+negotiation~\cite{sauermann2008cooluris, hyland2014bestpractices}, describe it
+with VoID~\cite{alexander2011void}, and use RDF~1.1~\cite{cyganiak2014rdf} and
+SPARQL~1.1~\cite{harris2013sparql}.
+
+\paragraph{Wikidata.} Wikidata~\cite{vrandecic2014wikidata} items carry typed
+statements with qualifiers and \emph{sitelinks} to the article about them in
+every Wikipedia edition, and the Wikidata Query Service exposes them through
+SPARQL~\cite{malyshev2018wdqs}. We use it to select the entities, to obtain
+precise dates and quantities, and, through English sitelinks, to link to DBpedia.
+
+\paragraph{Ontology engineering and question answering.} The ontology was
+designed from \emph{competency questions}, written before the schema and later
+used as tests~\cite{gruninger1995methodology}. DBpedia types and shortcut
+relations are derived with the OWL~2~RL profile~\cite{motik2012owl2profiles},
+whose rules run by forward chaining in polynomial time, so the derived triples
+can be materialised. Retrieval-augmented generation grounds the answer of a
+language model in retrieved evidence~\cite{lewis2020rag}; over a knowledge
+graph the retrieval can be a SPARQL query written by the model, as on our
+question-answering page (Section~\ref{sec:qa}).

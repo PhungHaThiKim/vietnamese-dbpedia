@@ -1,0 +1,124 @@
+% Part 1 -- Do Ngoc Trung: assignment, domain, architecture
+
+% --------- Slide 2: The assignment ---------
+\begin{frame}{The Assignment and What We Built}
+    \footnotesize
+    \begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
+        \toprule
+        Task & What we built & Result \\
+        \midrule
+        1.\ Define an ontology & \term{vio:} in OWL, every class under a \term{dbo:} class
+            & 18 classes, 54 properties \\
+        2.\ Collect articles & entities chosen via Wikidata, articles via the MediaWiki API
+            & 990 articles \\
+        3.\ 4-star data & infobox extraction, Unicode IRIs, quality checks, OWL\,2\,RL
+            & 131{,}233 triples \\
+        4.\ Link to DBpedia & \term{owl:sameAs} from the Wikidata sitelink of the same item
+            & 777 links \\
+        5.\ SPARQL interface & Linked Data server, SPARQL editor, question answering
+            & 4 tabs, HTTP 303 \\
+        \bottomrule
+    \end{tabularx}
+    \vspace{1em}
+    \begin{block}{Domain: in depth rather than in breadth}
+        \small
+        Vietnamese \alert{football} (players, clubs, national teams, stadiums),
+        \alert{provinces} and \alert{universities} --- not all of Vietnamese Wikipedia
+    \end{block}
+\end{frame}
+
+% --------- Slide 3: Why this domain ---------
+\begin{frame}{Why This Domain?}
+    \begin{columns}[T]
+    \column{0.44\textwidth}
+    \textbf{990 entities}
+    \begin{itemize}
+        \small
+        \item 611 football players
+        \item 61 clubs, 10 national teams
+        \item 29 stadiums
+        \item 168 universities
+        \item 110 provinces (34 current)
+        \item 1 country
+    \end{itemize}
+
+    \column{0.54\textwidth}
+    \textbf{Chosen because they are}
+    \begin{itemize}
+        \small
+        \item \alert{densely linked} $\rightarrow$ multi-hop questions
+        \item rich in infoboxes: \alert{97\%} of articles
+        \item linkable: \alert{78\%} have an English article
+        \item selected through Wikidata (\term{P31}, country \term{Q881}),
+              not through viwiki categories, which editors assign inconsistently
+    \end{itemize}
+    \end{columns}
+    \vspace{1em}
+    \begin{center}
+    \adjustbox{max width=\textwidth}{%
+    \begin{tikzpicture}[
+        font=\scriptsize, >={Stealth[length=1.6mm]},
+        ent/.style={draw=hustred, fill=hustlight, rounded corners=2pt, align=center,
+                    minimum height=0.6cm, inner sep=3pt},
+        lbl/.style={font=\tiny, text=black!60, above}
+      ]
+      \node[ent] (p) at (0,0) {Player};
+      \node[ent] (s) at (3.3,0) {Career station};
+      \node[ent] (c) at (6.4,0) {Club};
+      \node[ent] (st) at (9.0,0) {Stadium};
+      \node[ent] (pr) at (11.8,0) {Province};
+      \node[ent] (u) at (14.7,0) {University};
+      \draw[->] (p) -- node[lbl] {careerStation} (s);
+      \draw[->] (s) -- node[lbl] {team} (c);
+      \draw[->] (c) -- node[lbl] {ground} (st);
+      \draw[->] (st) -- node[lbl] {province} (pr);
+      \draw[->] (u) -- node[lbl] {province} (pr);
+      \draw[->] (p.south) to[out=-25, in=-155] node[font=\tiny, text=black!60, below] {birthProvince} (pr.south);
+    \end{tikzpicture}}
+    \end{center}
+\end{frame}
+
+% --------- Slide 4: Architecture ---------
+\begin{frame}{Architecture: Four Layers, Six Commands}
+    \centering
+    \adjustbox{max width=\textwidth}{%
+    \begin{tikzpicture}[
+        font=\scriptsize, >={Stealth[length=1.8mm]},
+        box/.style={draw=black!55, rounded corners=2pt, align=center, text width=2.6cm,
+                    minimum height=1.3cm, inner sep=3pt},
+        stage/.style={box, draw=hustred, fill=hustlight, line width=0.8pt},
+        store/.style={box, fill=black!7},
+        ext/.style={box, dashed},
+        flow/.style={->, black!60, thick},
+      ]
+      \node[ext]                          (src)   {Wikidata Query Service\\[1pt] MediaWiki API\\ (vi.wikipedia.org)};
+      \node[stage, right=0.45cm of src]   (crawl) {\textbf{(1) Collection}\\[1pt] \texttt{seeds}, \texttt{enrich}\\ SQLite HTTP cache};
+      \node[store, right=0.45cm of crawl] (raw)   {\texttt{data/raw/}\\[1pt] Wikidata facts,\\ articles, infoboxes};
+      \node[stage, right=0.45cm of raw]   (build) {\textbf{(2) Semantics}\\[1pt] \texttt{ontology}, \texttt{build}:\\ infobox $\rightarrow$ RDF};
+      \node[stage, below=0.8cm of build]  (post)  {\textbf{(3) Post-processing}\\[1pt] validate $\rightarrow$ OWL\,2\,RL\\ $\rightarrow$ VoID $\rightarrow$ export};
+      \node[store, left=0.45cm of post]   (out)   {\texttt{data/}\\[1pt] 131{,}233 triples\\ asserted / inferred};
+      \node[stage, left=0.45cm of out]    (srv)   {\textbf{(4) Server}\\[1pt] FastAPI + Gradio\\ in-memory rdflib};
+      \node[ext, left=0.45cm of srv]      (users) {Browsers, curl\\[1pt] LLM (optional)};
+      \draw[flow] (src) -- (crawl);
+      \draw[flow] (crawl) -- (raw);
+      \draw[flow] (raw) -- (build);
+      \draw[flow] (build) -- (post);
+      \draw[flow] (post) -- (out);
+      \draw[flow] (out) -- (srv);
+      \draw[flow, <->] (srv) -- (users);
+    \end{tikzpicture}}
+
+    \vspace{0.8em}
+    \begin{block}{\texttt{python -m vidbpedia <step>}}
+        \footnotesize
+        \texttt{seeds} $\rightarrow$ \texttt{enrich} $\rightarrow$ \texttt{ontology}
+        $\rightarrow$ \texttt{build} $\rightarrow$ \texttt{postprocess -{}-strict}
+        $\rightarrow$ \texttt{serve}
+    \end{block}
+    \begin{itemize}
+        \small
+        \item Only layer (1) calls the network; raw downloads are committed
+              $\rightarrow$ the dataset rebuilds \alert{offline}, identically
+        \item Graphs built with the rdflib API; \alert{one function} creates every IRI
+    \end{itemize}
+\end{frame}

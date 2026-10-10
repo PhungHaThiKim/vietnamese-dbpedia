@@ -1,0 +1,199 @@
+\section{Publishing and Querying}
+\label{sec:publishing}
+
+\term{python -m ui.api} (port 8000) starts one FastAPI application that hosts
+the SPARQL endpoint, the Linked Data routes and a React interface (\term{ui/}),
+all on the same graph; the earlier Gradio~\cite{abid2019gradio} interface is
+still served by \term{python -m vidbpedia serve}. At start-up the server loads
+the full N-Triples dump into an in-memory rdflib graph, loads
+\term{inferred.nt} into a set so that every triple can be labelled as asserted
+or inferred, builds a search index over labels and alternative names that
+ignores Vietnamese diacritics, precomputes the class tree, and loads a second
+graph without the inferred triples.
+
+\subsection{Dereferenceable IRIs}
+\label{sec:deref}
+
+The server follows the pattern of DBpedia and of the W3C Cool URIs
+note~\cite{sauermann2008cooluris}. Looking up a resource IRI never returns
+content directly. It answers \emph{303 See Other} and redirects either to an
+HTML page or to an RDF document, depending on the \term{Accept} header
+(Table~\ref{tab:routes}). The HTML page is \term{/?resource=<name>}, which
+opens the entity page \term{/entity/<name>}, so pages can be shared.
+
+\begin{table}[t]
+\centering
+\caption{Linked Data routes (\term{web/linked\_data.py}). An unknown name returns 404.}
+\label{tab:routes}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Route & Response \\
+\midrule
+\term{GET /resource/\{name\}} & 303 to \term{/?resource=\{name\}} for browsers, or to
+  \term{/data/\{name\}.ttl}, \term{.nt}, \term{.jsonld} or \term{.rdf} when \term{Accept} asks for
+  Turtle, N-Triples, JSON-LD or RDF/XML; sends \term{Vary: Accept} \\
+\term{GET /page/\{name\}} & 303 to the HTML page, like \term{dbpedia.org/page/…} \\
+\term{GET /data/\{name\}.\{ext\}} & every triple with the resource as subject, and up to 2{,}000 with it
+  as object, in the requested format; sends \term{Access-Control-Allow-Origin: *} \\
+\term{GET /ontology/\{term\}} & the definition of a \term{vio:} class or property, in Turtle \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+Listing~\ref{lst:curl} shows an exchange recorded on the running server. As
+browsers do, clients must percent-encode the non-ASCII characters of the path.
+In the response, the \term{dbo:*} types and the edge \term{vio:hasPlayer} are
+inferred; \term{dbo:Animal} appears because the DBpedia Ontology places
+\term{dbo:Person} under \term{dbo:Animal}, and our alignment module copies that
+class chain.
+
+\begin{listing}[t]
+\begin{Verbatim}
+$ curl -si -H "Accept: text/turtle" \
+       http://127.0.0.1:8000/resource/Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng
+HTTP/1.1 303 See Other
+vary: Accept
+location: /data/Nguy%E1%BB%85n_C%C3%B4ng_Ph%C6%B0%E1%BB%A3ng.ttl
+
+$ curl -sL -H "Accept: text/turtle" http://127.0.0.1:8000/resource/Nguy%E1%BB%85n_…
+vres:Mito_HollyHock vio:hasPlayer vres:Nguyễn_Công_Phượng .
+…
+vres:Nguyễn_Công_Phượng a dbo:Animal, dbo:Athlete, dbo:Person, dbo:SoccerPlayer, … ;
+    rdfs:label "Nguyễn Công Phượng"@en, "Nguyễn Công Phượng"@vi ;
+    …
+    vio:birthProvince vres:Nghệ_An ;
+    vio:careerStation vres:Nguyễn_Công_Phượng__1, … ;
+    …
+    owl:sameAs dbr:Nguyễn_Công_Phượng, wd:Q18045362 ;
+\end{Verbatim}
+\caption{Dereferencing a resource IRI with \term{curl}. Response headers are
+abridged and the Turtle is an excerpt.}
+\label{lst:curl}
+\end{listing}
+
+\subsection{SPARQL Endpoint and Terminal Client}
+\label{sec:endpoint}
+
+The route \term{/sparql} implements the SPARQL~1.1
+Protocol~\cite{feigenbaum2013protocol}, so that curl, SPARQLWrapper or YASGUI
+can query the graph. It takes the query as a GET parameter, a POST form field
+or an \term{application/sparql-query} body, with the 19 project prefixes
+predeclared, and returns SPARQL JSON (the default), XML or CSV for
+\term{SELECT} and \term{ASK}, and Turtle, N-Triples, JSON-LD or RDF/XML for
+\term{CONSTRUCT} and \term{DESCRIBE}, chosen by a \term{format} parameter, as
+on DBpedia, or by the \term{Accept} header. It is read-only, answers an invalid
+query with 400 and the error, rejects \term{FROM} and \term{SERVICE}, which
+would fetch other URLs, and runs queries in a worker thread. The
+non-standard parameter \term{inference=false} restricts a query to asserted
+triples (0 \term{dbo:Person} instances instead of 659).
+
+The command \term{python -m vidbpedia query} runs the same queries from a
+terminal, on the loaded dump or, with \term{-{}-endpoint}, through a running
+endpoint (Listing~\ref{lst:sparql}). Both use one module, \term{kg/query.py},
+which replaces two serializers of rdflib~7.6: its XML results writer drops the
+literals 0 and false, and its text table loses the \term{ORDER BY}.
+
+\begin{listing}[t]
+\begin{Verbatim}
+$ curl -H "Accept: text/csv" http://127.0.0.1:8000/sparql --data-urlencode "query=
+    SELECT ?stadium ?seats WHERE { ?stadium a dbo:Stadium ; dbo:seatingCapacity ?seats }
+    ORDER BY DESC(?seats) LIMIT 3"
+stadium,seats
+http://vi.dbpedia.org/resource/Sân_vận_động_Cần_Thơ,44400
+http://vi.dbpedia.org/resource/Sân_vận_động_Quốc_gia_Mỹ_Đình,40192
+http://vi.dbpedia.org/resource/Sân_vận_động_Thiên_Trường,30000
+$ python -m vidbpedia query "SELECT ?province (COUNT(?p) AS ?players) WHERE {
+    ?p vio:birthProvince ?province } GROUP BY ?province ORDER BY DESC(?players) LIMIT 3"
+province       | players
+---------------+--------
+vres:Nghệ_An   | 58
+vres:Hà_Nội    | 48
+vres:Thanh_Hóa | 42
+(3 dòng)
+\end{Verbatim}
+\caption{The SPARQL endpoint called with \term{curl} (CSV results) and the
+terminal client (table). The first query uses only DBpedia terms, so every
+answer comes from inferred triples.}
+\label{lst:sparql}
+\end{listing}
+
+\subsection{Web Interface}
+\label{sec:ui}
+
+The interface has five pages (Figures~\ref{fig:ui}--\ref{fig:qa}). A top-bar switch hides
+inferred triples in every graph.
+\begin{itemize}
+  \item \textbf{Overview} summarises the dataset, its inferred share, the
+        links and the validation result.
+  \item \textbf{Ontology} lists all 8{,}624 resources under their most specific
+        \term{vio:} class, DBpedia superclasses after a $\sqsubseteq$ (a root shows
+        its chain, \term{vio:Person} $\sqsubseteq$ \term{dbo:Person} $\sqsubseteq$
+        \term{dbo:Animal}), and the OWL axioms with the triples each produced.
+  \item \textbf{Entity} renders a page modelled on \term{dbpedia.org/page/…}:
+        links to Wikipedia, DBpedia and Wikidata, the class tree with an
+        asserted or inferred badge for each class, the \term{owl:sameAs} and
+        provenance links, RDF downloads in four formats, the key facts, a career
+        timeline, a draggable neighbourhood graph, a relation tree up to three
+        hops deep and the property tables.
+  \item \textbf{Question answering} (Section~\ref{sec:qa}).
+  \item \textbf{SPARQL} is an editor with the 19 prefixes predeclared, nine
+        example queries, a switch for inferred triples and JSON or CSV downloads.
+\end{itemize}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{ui_entity.png}
+\caption{Entity page of Nguyễn Công Phượng (abstract hidden): the asserted class and the named
+graph, classes marked asserted (\emph{khai báo}) or inferred (\emph{suy luận}), and the
+Linked Data card. Labels are in Vietnamese.}
+\label{fig:ui}
+\end{figure}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{ui_entity_graph.png}
+\caption{Lower part of the same page: key facts, career timeline and the draggable
+neighbourhood graph, where the \term{playedFor} edges are dashed because they are inferred.}
+\label{fig:ui-graph}
+\end{figure}
+
+\subsection{Natural-Language Question Answering}
+\label{sec:qa}
+
+\begin{figure}[t]
+\centering
+\includegraphics[width=\textwidth]{ui_ask.png}
+\caption{Question answering with \term{gpt-4o} for ``which players have played for Than Quảng
+Ninh?'': the answer, the progress of the six steps, the generated query, the ontology terms
+with their inferred share, and 39 rows with reasoning against 0 without (step~1 and the
+checks of step~3 hidden). Labels are in Vietnamese.}
+\label{fig:qa}
+\end{figure}
+
+A language model writes a SPARQL query from a prompt with a schema summary,
+rules (never guess IRIs, use the \term{playedFor} shortcut, skip former
+provinces) and six example queries. A query that fails or returns no rows goes
+back once with the error, and a second prompt answers from at most 30 rows;
+any OpenAI-compatible API works.
+
+\paragraph{Entity linking.} Step~1 needs no model. The labels (Vietnamese and
+English) and redirect titles of the 1{,}176 entities of the main classes are
+folded to lower case without diacritics and stored in two hash tables: whole
+names, also without a bracketed qualifier, and the last two to four words of
+each name, since Vietnamese names start with the type or the family name
+(``Nguyễn Quang Hải''). Spans of the
+question are looked up longest first; a matched word is not reused, spans of
+generic words are skipped, and a name shared by up to six entities keeps them all.
+Linking takes about 1\,ms.
+
+The page shows the answer above the six steps behind it:
+(1)~entity linking, whose IRIs are added to the prompt; (2)~each generation attempt, with feedback naming IRIs absent
+from the graph or of the wrong class; (3)~checks of syntax, read-only
+form, \term{FROM}, \term{SERVICE}, \term{LIMIT} and linked IRIs, with the
+inferred share of each ontology term; (4)~execution with and without inferred
+triples; (5)~the answer; and (6)~an evidence graph (Figure~\ref{fig:qa}).
+The examples follow one performance rule: rdflib applies a \term{FILTER} only after
+joining the whole group, so the lookup of an entity by name is written as a
+subquery that runs first. For the career of Nguyễn Công Phượng this takes the
+query from 10.7\,s to 0.27\,s.

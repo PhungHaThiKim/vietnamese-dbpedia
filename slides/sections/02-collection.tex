@@ -1,0 +1,34 @@
+% Part 1 -- Do Ngoc Trung: data collection
+
+% --------- Slide 5: Collection ---------
+\begin{frame}[fragile]{Collecting Entities and Articles}
+    \textbf{Wikidata Query Service} --- one query per class, e.g.\ players:
+\begin{Verbatim}
+?item wdt:P31 wd:Q5 ;                        # human
+      wdt:P106 wd:Q937857 ;                  # association football player
+      wdt:P27 wd:Q881 .                      # citizen of Vietnam
+?vs schema:about ?item ; schema:name ?viTitle ;
+    schema:isPartOf <https://vi.wikipedia.org/> .   # has a Vietnamese article
+\end{Verbatim}
+    \begin{itemize}
+        \footnotesize
+        \item drop list and disambiguation pages; English article optional
+        \item facts in blocks of 300: dates \alert{with precision}, quantities with
+              point in time, relations with start/end/apps/goals qualifiers
+        \item birthplaces and locations mapped to a province through \term{P131*}
+    \end{itemize}
+    \vspace{0.3em}
+    \textbf{MediaWiki API} (vi.wikipedia.org), batches of up to 50 titles
+    \begin{itemize}
+        \footnotesize
+        \item page ID, revision, image, coordinates, lead section (abstract)
+        \item categories, redirects, infobox parameters, external links
+        \item 2{,}588 infobox link targets resolved (71 disambiguation pages)
+    \end{itemize}
+    \vspace{0.3em}
+    \begin{block}{Polite and reproducible}
+        \footnotesize
+        2\,s / 1\,s between requests, \texttt{maxlag}, retries on 429 \;·\; SQLite
+        cache, \texttt{-{}-offline} and \texttt{-{}-refresh}
+    \end{block}
+\end{frame}

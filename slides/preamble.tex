@@ -1,0 +1,103 @@
+% Theme, colour palette, packages and title block.
+% Loaded by main.tex; do not put \documentclass or \begin{document} here.
+
+% --- Fonts: T5 last (default) so Vietnamese labels and IRIs typeset with pdflatex ---
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T5]{fontenc}
+\usepackage{lmodern}
+
+% --- Theme ---
+\usetheme{Madrid}
+\setbeamertemplate{navigation symbols}{}
+\setbeamerfont{title}{size=\large}
+
+% --- Footer: HUST emblem (bottom-left) + frame number (bottom-right) ---
+\setbeamertemplate{footline}{%
+  \hbox{%
+    \begin{beamercolorbox}[wd=\paperwidth, ht=3.4ex, dp=2.4ex,
+                           leftskip=.9em, rightskip=.9em]{normal text}%
+      \raisebox{-1.2ex}{\includegraphics[height=5.6ex]{figures/hust_emblem.png}}%
+      \hfill\raisebox{0.6ex}{\color{hustred}\bfseries\insertframenumber}%
+    \end{beamercolorbox}%
+  }%
+}
+
+% --- Packages ---
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{amsmath, amssymb}
+\usepackage{xcolor}
+\usepackage{fancyvrb}       % verbatim with Vietnamese characters (listings cannot)
+\fvset{fontsize=\scriptsize, frame=single, framesep=1mm, rulecolor=\color{black!35}}
+
+% --- TikZ for diagrams ---
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, positioning, shapes.geometric}
+\usepackage{adjustbox}   % shrink over-wide diagrams to the text width
+
+% Vocabulary terms and IRIs: \term{vio:playedFor}
+\newcommand{\term}[1]{\text{\ttfamily #1}}
+% Highlight inside table cells: \alert at the start of a p-column cell drops the
+% cell by one line in beamer, \hl does not
+\newcommand{\hl}[1]{\textcolor{hustred}{#1}}
+% Placeholder the group must fill in before presenting (gray, bracketed)
+\newcommand{\fillin}[1]{\textcolor{black!45}{\itshape[#1]}}
+
+% --- Custom colors (HUST red palette) ---
+\definecolor{hustred}{RGB}{176, 50, 57}
+\definecolor{hustdark}{RGB}{120, 30, 35}
+\definecolor{hustlight}{RGB}{240, 220, 222}
+% Edge colours in data diagrams: asserted (gray), inferred (HUST red, dashed), external links (blue)
+\definecolor{accgray}{HTML}{8A8984}
+\definecolor{accblue}{HTML}{2A78D6}
+% RDFS graph figure (shared with the report: ../report/figures/rdfs_graph.tex)
+\colorlet{rdfsdraw}{hustred}
+\colorlet{rdfsfill}{hustlight}
+\colorlet{rdfsprop}{hustdark}
+\colorlet{rdfsaxiom}{hustred}
+
+% --- Override Madrid palette ---
+\setbeamercolor{structure}{fg=hustred}
+\setbeamercolor{palette primary}{bg=hustred, fg=white}
+\setbeamercolor{palette secondary}{bg=hustdark, fg=white}
+\setbeamercolor{palette tertiary}{bg=hustred!85!black, fg=white}
+\setbeamercolor{palette quaternary}{bg=hustdark, fg=white}
+
+% --- Title slide ---
+\setbeamercolor{title}{bg=hustred, fg=white}
+\setbeamercolor{author}{fg=hustred}
+\setbeamercolor{institute}{fg=hustdark}
+\setbeamercolor{date}{fg=black}
+
+% --- Frame title bar ---
+\setbeamercolor{frametitle}{bg=hustred, fg=white}
+\setbeamercolor{frametitle right}{bg=hustred, fg=white}
+
+% --- Blocks ---
+\setbeamercolor{block title}{bg=hustred, fg=white}
+\setbeamercolor{block body}{bg=hustlight, fg=black}
+
+% --- Alert ---
+\setbeamercolor{alerted text}{fg=hustred}
+
+% --- Itemize bullets ---
+\setbeamercolor{itemize item}{fg=hustred}
+\setbeamercolor{itemize subitem}{fg=hustred}
+\setbeamercolor{enumerate item}{fg=hustred}
+
+% --- Section TOC ---
+\setbeamercolor{section in toc}{fg=hustred}
+\setbeamercolor{section in head/foot}{bg=hustred, fg=white}
+
+% =============================================================
+% Title block. The cover (sections/00-title.tex) is drawn with TikZ on the
+% HUST background; these fields set the PDF metadata.
+\title[Vietnamese DBpedia]{Vietnamese DBpedia: \\ Linked Open Data from Vietnamese Wikipedia}
+
+\author[Group 23]{Group 23}
+
+\institute[HUST]{Hanoi University of Science and Technology}
+
+\date{October 2026}

@@ -1,0 +1,97 @@
+% Packages, verbatim style, and title block.
+% Loaded by main.tex; do not put \documentclass or \begin{document} here.
+
+% NeurIPS 2024 style: US letter, 5.5in x 9in text block, 10pt Times, title between
+% rules. [preprint] prints the authors (the default mode anonymises them and adds
+% line numbers); [nonatbib] keeps the numeric IEEEtran references.
+\usepackage[preprint,nonatbib]{neurips_2024}
+
+% Language and fonts. T5 must be the last (default) encoding so that Vietnamese
+% IRIs and labels (Nguyễn_Công_Phượng, Thể_loại:…) typeset with pdflatex.
+% neurips_2024 asks for Times (ptm) and Helvetica (phv), which have no T5 glyphs;
+% TeX Gyre Termes and Heros are the same designs with T5 support. Latin Modern
+% stays as the typewriter font for IRIs and code.
+\usepackage[utf8]{inputenc}
+\usepackage[T1,T5]{fontenc}
+\usepackage{lmodern}
+\usepackage{tgtermes}
+\usepackage{tgheros}
+\usepackage[vietnamese,english]{babel}
+
+% Useful packages
+\usepackage{amsmath, amssymb}
+\usepackage{graphicx}
+\usepackage{adjustbox}
+\usepackage{xcolor}
+\usepackage{float}
+\usepackage[font=small,labelfont=bf]{caption}
+\usepackage{subcaption}
+\usepackage{microtype}
+
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{tabularx}
+\usepackage{array}
+
+% Verbatim blocks (SPARQL, Turtle, curl). listings cannot handle UTF-8
+% Vietnamese characters, fancyvrb passes them through to the T5 font.
+% neurips_2024 makes \footnotesize 9pt; 8pt keeps the longest lines (~95
+% characters) inside the 5.5in text block. samepage keeps a block on one page.
+\usepackage{fancyvrb}
+\fvset{fontsize=\fontsize{8pt}{9.5pt}\selectfont, samepage=true, frame=single,
+       framesep=1.5mm, rulecolor=\color{gray!60}}
+% Floating listings keep a verbatim block on one page: \begin{listing}…\caption{…}\end{listing}
+\newfloat{listing}{t}{lol}
+\floatname{listing}{Listing}
+
+% "approximately" tilde. \sim is a mathrel, so bare $\sim$5 gets thick
+% relation spacing on both sides; \mathord strips it.
+\newcommand{\apx}{\ensuremath{\mathord{\sim}}}
+
+% Vocabulary terms and IRIs in running text: \term{vio:playedFor}.
+% Typewriter fonts do not hyphenate by default; long IRIs would overrun the
+% margin, so allow hyphenation in \term and give paragraphs extra stretch.
+\newcommand{\term}[1]{\text{\ttfamily\hyphenchar\font=45\relax #1}}
+\setlength{\emergencystretch}{3em}
+
+% Placeholder the group must fill in before submission (prints in red).
+\newcommand{\fillin}[1]{\textcolor{red}{[#1]}}
+
+% --- TikZ for schematic figures ---
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, calc, positioning, backgrounds, shapes.geometric}
+% Accent colours: project vocabulary (blue), inferred triples (orange),
+% external datasets and asserted edges (gray).
+\definecolor{accblue}{HTML}{2A78D6}
+\definecolor{accorange}{HTML}{EB6834}
+\definecolor{accgray}{HTML}{8A8984}
+% RDFS graph figure (figures/rdfs_graph.tex): instance nodes, property nodes and
+% domain/range edges, entailed triples
+\colorlet{rdfsdraw}{accblue}
+\colorlet{rdfsfill}{accblue!6}
+\colorlet{rdfsprop}{accblue!75!black}
+\colorlet{rdfsaxiom}{accorange}
+
+\usepackage[colorlinks=true, allcolors=blue]{hyperref}
+
+\title{Building a Vietnamese DBpedia:\\ Linked Open Data from Vietnamese Wikipedia}
+
+% NeurIPS author block: \And separates authors on one line; the first line of
+% each block is bold, the next lines are the student ID.
+\author{%
+  Ha Thi Kim Phung \\ 20242460M
+  \And
+  Do Ngoc Trung \\ 20232311M
+  \And
+  Bui Duc Phan Hoang \\ 20252004M
+  \And
+  Do Hoang Dung \\ 20241184M
+}
+
+% Footnote at the bottom of page 1, where NeurIPS prints the conference notice.
+\makeatletter
+\renewcommand{\@noticestring}{%
+  Semantic Web course project, Topic~2: \emph{Build a DBpedia version for Vietnamese language}.
+  Group~23, lecturer Dr.~Do Ba Lam. Hanoi University of Science and Technology, October 2026.%
+}
+\makeatother

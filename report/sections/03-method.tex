@@ -1,0 +1,468 @@
+\section{System Design}
+\label{sec:design}
+
+\subsection{Architecture}
+\label{sec:architecture}
+
+The system is a Python package, \term{vidbpedia}, organised in four layers
+(Figure~\ref{fig:architecture}). Each step is one command,
+\term{python -m vidbpedia <step>}: \term{seeds}, \term{enrich},
+\term{ontology}, \term{build}, \term{postprocess} and \term{serve}, plus
+\term{query} for SPARQL from the terminal. Only the collection layer uses the
+network: HTTP responses are cached in SQLite and the raw downloads are
+committed under \term{data/raw/}, so the later layers rebuild the dataset
+offline and identically. Graphs are built with the rdflib API~\cite{rdflib}
+rather than by concatenating Turtle strings, which rules out syntax and
+escaping errors, and a single function creates every resource IRI, so an
+entity cannot receive two IRIs.
+
+\begin{figure}[t]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\begin{tikzpicture}[
+    font=\scriptsize, >={Stealth[length=1.8mm]},
+    box/.style={draw=accgray, rounded corners=2pt, align=center, text width=2.7cm,
+                minimum height=1.3cm, inner sep=3pt},
+    stage/.style={box, draw=accblue, fill=accblue!7},
+    store/.style={box, fill=accgray!12},
+    ext/.style={box, dashed},
+    flow/.style={->, accgray, thick},
+  ]
+  \node[ext]                        (src)   {Wikidata Query Service\\[1pt] MediaWiki API\\ (vi.wikipedia.org)};
+  \node[stage, right=0.45cm of src]   (crawl) {\textbf{(1) Collection}\\[1pt] \texttt{seeds}, \texttt{enrich}\\ SQLite HTTP cache};
+  \node[store, right=0.45cm of crawl] (raw)   {\texttt{data/raw/} (committed)\\[1pt] Wikidata facts,\\ article metadata, infoboxes};
+  \node[stage, right=0.45cm of raw]   (build) {\textbf{(2) Semantics}\\[1pt] \texttt{ontology}: merge modules\\ \texttt{build}: infobox $\rightarrow$ RDF};
+  \node[stage, below=0.75cm of build] (post)  {\textbf{(3) Post-processing}\\[1pt] validate $\rightarrow$ OWL\,2\,RL\\ $\rightarrow$ VoID $\rightarrow$ export};
+  \node[store, left=0.45cm of post]   (out)   {\texttt{data/}\\[1pt] 131{,}543 triples (.ttl, .nt)\\ ontology, asserted\\ and inferred parts};
+  \node[stage, left=0.45cm of out]    (srv)   {\textbf{(4) Server}\\[1pt] FastAPI + React UI\\ in-memory rdflib graph\\ \texttt{/sparql} endpoint};
+  \node[ext, left=0.45cm of srv]      (users) {Browsers, terminal,\\ SPARQL and RDF clients\\[1pt] LLM (OpenAI-compatible\\ API, optional)};
+  \draw[flow] (src) -- (crawl);
+  \draw[flow] (crawl) -- (raw);
+  \draw[flow] (raw) -- (build);
+  \draw[flow] (build) -- node[right, font=\tiny, text=accgray] {\texttt{data/raw/rdf/*.ttl}} (post);
+  \draw[flow] (post) -- (out);
+  \draw[flow] (out) -- (srv);
+  \draw[flow, <->] (srv) -- (users);
+\end{tikzpicture}
+\end{adjustbox}
+\caption{Architecture. Blue boxes are the four layers of the \texttt{vidbpedia}
+package (the interface of layer~(4) is in \texttt{ui/}), gray boxes are files on
+disk, dashed boxes are external systems. Only layer~(1) calls the network.}
+\label{fig:architecture}
+\end{figure}
+
+% =========================================================================
+\subsection{Ontology}
+\label{sec:ontology}
+
+The ontology is written as ten Turtle modules in \term{ontology/}, from
+\term{000-prefixes.ttl} to \term{420-football.ttl}. They are merged in numeric order into
+\term{vi-ontology.ttl} (859 triples) and checked by rdflib when merged.
+Table~\ref{tab:namespaces} lists the namespaces. Following
+DBpedia~\cite{lehmann2015dbpedia}, resources are named by their article title,
+infobox parameters have a raw namespace, and categories are SKOS concepts.
+
+\begin{table}[t]
+\centering
+\caption{Namespaces. The \texttt{vi.dbpedia.org} namespaces mirror the IRI
+scheme of DBpedia language chapters.}
+\label{tab:namespaces}
+\small
+\begin{tabularx}{\textwidth}{@{}ll>{\raggedright\arraybackslash}X@{}}
+\toprule
+Prefix & Namespace & Used for \\
+\midrule
+\term{vio:}  & \term{http://vi.dbpedia.org/ontology/} & classes and properties of this project \\
+\term{vres:} & \term{http://vi.dbpedia.org/resource/} & resources (entities) \\
+\term{vip:}  & \term{http://vi.dbpedia.org/property/} & raw infobox properties, like \term{dbp:} \\
+\term{vcat:} & \term{http://vi.dbpedia.org/resource/Thể\_loại:} & Wikipedia categories \\
+\term{dbo:}  & \term{http://dbpedia.org/ontology/} & DBpedia Ontology \\
+\term{dbr:}  & \term{http://dbpedia.org/resource/} & English DBpedia resources \\
+\term{wd:}   & \term{http://www.wikidata.org/entity/} & Wikidata items \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Classes.} The ontology has two layers~\cite{heath2011linked}. The
+upper layer reuses the DBpedia Ontology: \term{050-dbo-alignment.ttl} declares
+the 24 DBpedia classes and 44 properties that \term{vio:} maps to, with
+DBpedia's English labels, our Vietnamese labels (\term{dbo:Animal} is ``Động
+vật'') and \term{rdfs:isDefinedBy dbo:}, but not DBpedia's domains and ranges.
+The lower layer has 18 \term{vio:} classes in four disjoint trees: people,
+organisations, locations and career stations (Table~\ref{tab:classes}). A
+\term{vio:} class exists only where an axiom or a competency
+question~\cite{gruninger1995methodology} needs it, such as
+\term{vio:FormerProvince}; there is no \term{vio:Animal}. Each class is an
+\term{rdfs:subClassOf}, not an \term{owl:equivalentClass}, of a DBpedia class,
+directly or through its parent. Data described with \term{vio:} can thus be
+queried with \term{dbo:} after reasoning (Section~\ref{sec:reasoning}), while
+our domains, functional properties and disjointness axioms constrain only our
+own data, avoiding the Exclusivity anti-pattern~\cite{paulheim2024modeling}.
+\term{vio:FormerProvince} holds the
+provinces that were dissolved or merged, including in the 2025 reorganisation:
+a province is former if Wikidata gives a dissolution date (\term{P576}) or no
+current province statement (\term{P31}). With this rule, ``how many provinces are there now'' returns
+34, while history is kept through \term{vio:successor} and
+\term{vio:predecessor}.
+
+\begin{figure}[t]
+\centering
+\resizebox{\textwidth}{!}{\input{figures/rdfs_graph}}
+\caption{RDFS graph of an excerpt of the ontology. Above the line is the
+schema: classes and properties are resources typed by \term{rdfs:Class} and
+\term{rdf:Property}, linked by \term{rdfs:subClassOf} and
+\term{rdfs:subPropertyOf}; blue edges are the \term{rdfs:domain} and
+\term{rdfs:range} of two properties. Below the line are instance data
+(\term{vres:…\_\_2} is the career station \term{vres:Nguyễn\_Công\_Phượng\_\_2}).
+The dashed edge is a triple that RDFS entails: the player is also a
+\term{dbo:Person}. \term{dbo:Person}~$\sqsubseteq$~\term{dbo:Animal} is DBpedia's own axiom. Only some \term{rdf:type} edges to the RDFS vocabulary are
+drawn; the full class hierarchy is in Table~\ref{tab:classes}.}
+\label{fig:rdfs}
+\end{figure}
+
+\begin{table}[t]
+\centering
+\caption{Class hierarchy of \term{vio:} (indentation shows
+\term{rdfs:subClassOf}), the DBpedia class each class is aligned to, and the
+number of instances before and after OWL~2~RL reasoning.}
+\label{tab:classes}
+\small
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}llrr@{}}
+\toprule
+Class & DBpedia superclass & Asserted & After reasoning \\
+\midrule
+\term{Person}                             & \term{dbo:Person}                 & 0     & 659 \\
+\quad\term{Athlete}                       & \term{dbo:Athlete}                & 0     & 611 \\
+\qquad\term{FootballPlayer}               & \term{dbo:SoccerPlayer}           & 611   & 611 \\
+\qquad\quad\term{NationalTeamPlayer}      & ---                               & 0     & 486 \\
+\term{Organisation}                       & \term{dbo:Organisation}           & 0     & 410 \\
+\quad\term{FootballClub}                  & \term{dbo:SoccerClub}             & 61    & 215 \\
+\quad\term{NationalFootballTeam}          & \term{dbo:NationalSoccerClub}     & 10    & 27 \\
+\quad\term{EducationalInstitution}        & \term{dbo:EducationalInstitution} & 0     & 168 \\
+\qquad\term{University}                   & \term{dbo:University}             & 168   & 168 \\
+\term{Location}                           & \term{dbo:Place}                  & 0     & 370 \\
+\quad\term{Province}                      & \term{dbo:Province}               & 110   & 110 \\
+\qquad\term{FormerProvince}               & ---                               & 76    & 76 \\
+\quad\term{Stadium}                       & \term{dbo:Stadium}                & 29    & 44 \\
+\quad\term{Country}                       & \term{dbo:Country}                & 1     & 1 \\
+\term{CareerStation}                      & \term{dbo:CareerStation}          & 0     & 3{,}382 \\
+\quad\term{YouthStation}                  & ---                               & 527     & 527 \\
+\quad\term{ClubStation}                   & ---                               & 1{,}966 & 1{,}966 \\
+\quad\term{NationalTeamStation}           & ---                               & 889     & 889 \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\paragraph{Properties.} The ontology has 54 properties, 26 object and 28
+datatype properties (Figure~\ref{fig:rdfs}). All have labels in Vietnamese and
+English. Every datatype property has an \term{rdfs:range}, and 39 properties
+have an \term{rdfs:domain} (24 datatype, 15 object). When DBpedia has an
+equivalent of the same kind, the property is an \term{rdfs:subPropertyOf} of it
+(38 properties). Typical examples are
+\term{vio:birthDate} $\sqsubseteq$ \term{dbo:birthDate},
+\term{vio:capacity} $\sqsubseteq$ \term{dbo:seatingCapacity}, and
+\term{vio:birthProvince} $\sqsubseteq$ \term{vio:birthPlace} $\sqsubseteq$
+\term{dbo:birthPlace}. 22 datatype properties are functional, for example
+birth date, height and capacity. Some domains are left open on purpose. If
+\term{vio:latitude} or \term{vio:province} had the domain \term{Location},
+every club and university that has coordinates or a province would be
+inferred to be a location, which contradicts the disjointness axioms.
+
+\paragraph{Axioms.} A career is modelled with the ``role at a time'' pattern
+of \term{dbo:CareerStation}. A player has one \term{vio:careerStation} per
+team and period, and the station carries the team, the start and end years,
+appearances, goals and an on-loan flag. Four kinds of axiom act on this
+structure during reasoning:
+\begin{itemize}
+  \item a \emph{property chain},
+        $\term{vio:careerStation} \circ \term{vio:team} \sqsubseteq \term{vio:playedFor}$,
+        which gives a direct player--team edge;
+  \item \emph{inverses}, so that each relation can be queried in both
+        directions: \term{vio:hasPlayer} is the inverse of
+        \term{vio:playedFor}, and the same holds for the pairs
+        \term{vio:hasPart}/\term{vio:isPartOf} and
+        \term{vio:predecessor}/\term{vio:successor};
+  \item \emph{restrictions}, which derive classes from the career data:
+        {\small
+        \begin{gather*}
+          \term{FootballPlayer} \sqcap \exists\,\term{careerStation}.\term{NationalTeamStation} \sqsubseteq \term{NationalTeamPlayer},\\
+          \term{ClubStation} \sqsubseteq \forall\,\term{team}.\term{FootballClub}.
+        \end{gather*}}
+        The intersection keeps the first definition independent of the domain
+        of \term{careerStation}~\cite{paulheim2024modeling}. Similar $\forall$
+        restrictions hold for youth and national-team stations. They give a
+        class to teams that are not seeds, such as the Japanese club Mito
+        HollyHock;
+  \item four \emph{disjointness} axioms (\term{owl:AllDisjointClasses}): between
+        the four roots, between club, national team and educational
+        institution, between province, stadium and country, and between the
+        three kinds of station. They let the reasoner detect modelling errors
+        (Section~\ref{sec:reasoning}).
+\end{itemize}
+
+% =========================================================================
+\subsection{Data Collection}
+\label{sec:collection}
+
+\paragraph{Entity selection.} \term{seeds} runs one Wikidata Query Service
+query per class. A query matches the class through \term{P31}/\term{P279*} and
+the country through \term{P17} or \term{P27} (Vietnam, \term{Q881}). It keeps
+only items with a Vietnamese Wikipedia article, and makes the English article
+optional. The query for players is shown below. Wikimedia list pages,
+disambiguation pages and titles starting with ``Danh sách'' (list of) are
+removed. When an item matches several classes, the first class in the
+priority order wins.
+\begin{Verbatim}
+SELECT DISTINCT ?item ?viTitle ?enTitle WHERE {
+  ?item wdt:P31 wd:Q5 ; wdt:P106 wd:Q937857 ; wdt:P27 wd:Q881 .  # footballer, Vietnam
+  FILTER NOT EXISTS { ?item wdt:P31 wd:Q13406463 }               # Wikimedia list page
+  FILTER NOT EXISTS { ?item wdt:P31 wd:Q4167410 }                # disambiguation page
+  ?vs schema:about ?item ; schema:isPartOf <https://vi.wikipedia.org/> ;
+      schema:name ?viTitle .
+  OPTIONAL { ?es schema:about ?item ; schema:isPartOf <https://en.wikipedia.org/> ;
+                 schema:name ?enTitle . } }
+\end{Verbatim}
+Facts are fetched in blocks of at most 300 items: dates with their precision,
+so that a year-only birth date becomes \term{xsd:gYear} instead of a fabricated
+1~January; quantities (height, capacity, population, area, students) with their
+point in time (\term{P585}), so that the latest value is kept; relations with
+their start, end, appearance and goal qualifiers; and the labels and sitelinks
+of every referenced item. Birthplaces and locations are mapped to a province
+through \term{P131*}. The result is 990 seeds: 611 players, 61 clubs, 10
+national teams, 29 stadiums, 168 universities, 110 provinces and 1 country.
+
+\paragraph{Article collection.} \term{enrich} reads the Vietnamese articles
+through the MediaWiki Action API, in batches of up to 50 titles with
+\term{maxlag} set. It stores the page ID, revision, length, coordinates, lead
+image, plain-text introduction (the abstract), non-hidden categories and
+incoming redirects, and, instead of the whole wikitext, the parameters of the
+outermost infobox (found with \term{mwparserfromhell}) and the URLs of the
+``Liên kết ngoài'' (external links) section. Every title linked from an infobox
+is resolved, following redirects and flagging disambiguation pages (2{,}588
+titles, 71 disambiguation pages), and redirects to the infobox templates are
+kept as template aliases. Requests are spaced 2\,s apart for the Wikidata Query
+Service and 1\,s for Wikipedia, carry a contact User-Agent, and are retried
+on HTTP 429 and \term{maxlag}; \term{-{}-offline} and
+\term{-{}-refresh} use only the cache or bypass it.
+
+% =========================================================================
+\subsection{Transformation to RDF}
+\label{sec:transform}
+
+\paragraph{IRIs.} A resource IRI is \term{vres:} followed by the Vietnamese
+title as MediaWiki normalises it: NFC Unicode, first character in upper case,
+spaces as underscores. Like DBpedia chapters, the IRI keeps Unicode characters,
+for example \term{vres:Nguyễn\_Công\_Phượng}, and percent-encodes only the
+characters that are not allowed in an IRI. Career stations are numbered from
+youth to club to national team (\term{vres:Nguyễn\_Công\_Phượng\_\_3}).
+Redirects are separate resources that point to the main resource with
+\term{dbo:wikiPageRedirects}, and their titles are also added to the main
+resource as \term{skos:altLabel}, so that it can be found by its other names.
+
+\paragraph{DBpedia datasets.} For every entity, \term{build} produces the
+same basic datasets as DBpedia (Table~\ref{tab:core}). Raw infobox
+values are kept under \term{vip:}, as in DBpedia's \term{dbp:} namespace.
+
+\begin{table}[t]
+\centering
+\caption{DBpedia datasets reproduced for every entity, with their size in the
+current build.}
+\label{tab:core}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}Xr@{}}
+\toprule
+Dataset & Properties & Size \\
+\midrule
+Labels & \term{rdfs:label} @vi, @en & 990 vi, 805 en \\
+Abstracts & \term{dbo:abstract} (lead section), \term{rdfs:comment} (at most 400 characters) & 990 \\
+Page metadata & \term{dbo:wikiPageID}, \term{dbo:wikiPageRevisionID}, \term{prov:wasDerivedFrom}, \term{foaf:isPrimaryTopicOf} & 990 \\
+Images & \term{dbo:thumbnail}, \term{foaf:depiction} & 543 \\
+Categories & \term{dct:subject} $\rightarrow$ \term{skos:Concept} & 9{,}126 links, 1{,}154 categories \\
+Redirects & \term{dbo:wikiPageRedirects}, \term{skos:altLabel} & 1{,}274 \\
+External links & \term{dbo:wikiPageExternalLink}, \term{foaf:homepage} & 713 links, 270 homepages \\
+Coordinates & \term{vio:latitude}/\term{vio:longitude} ($\sqsubseteq$ \term{wgs84:}), \term{georss:point} & 189 entities \\
+Interlinks & \term{owl:sameAs} \term{dbr:}, \term{wd:} & 777, 990 \\
+Raw infobox & \term{vip:}\emph{key} & 24{,}605 triples, 687 properties \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Mapping-based infobox extraction.} Infobox values are mapped to
+\term{vio:} properties in four stages. The wikitext of each value is first
+\emph{rendered}: common nested templates (dates, heights, URLs and the list
+templates \term{ubl}, \term{plainlist} and \term{hlist}) are interpreted, and
+references, comments and flag icons removed. It is then \emph{parsed} into a
+typed literal: the parsers understand Vietnamese numbers (\term{16.361,2}),
+open year ranges (\term{2015–}) and loan markers (\term{→}, \term{(mượn)}), and
+accept heights only between 1.4 and 2.2\,m. Keys are \emph{mapped} to
+\term{vio:} properties by the \term{MAPPINGS} table of five template families
+(players, clubs and national teams, stadiums, universities, provinces); as in
+the mappings wiki of DBpedia, a property can take keys from both the Vietnamese
+and the English template. Finally the \term{PRECEDENCE} table \emph{chooses a
+source} when Wikidata and the infobox both have a value: Wikidata wins for
+dates, height, population, area, capacity, opening year, homepage and
+abbreviation, the infobox for shirt number, numbers of students and academic
+staff, motto and administrative code, and object values of both are combined.
+Link targets are filtered by class: the team of a career station cannot be a
+province, a stadium or a university, and the \term{vio:ground} of a club must
+be a stadium.
+
+Career stations come from the numbered parameters of the football biography
+infobox (\term{years}$n$, \term{clubs}$n$, \term{caps}$n$ and \term{goals}$n$)
+and their \term{youth} and \term{national} variants. For 594 of the 611 players
+the career is read from the infobox; the other 17 have no club rows (or no
+infobox) and fall back to the Wikidata statements \term{P54}. In total 601
+players receive 3{,}382 stations. The
+build also writes \term{mapping\_stats.json}, which counts mapped
+and unmapped keys for each template family, to guide which mappings to add next.
+
+\paragraph{From three to four stars.} Listing~\ref{lst:fourstar} follows one
+infobox through the transformation. Before it, the data are machine-readable and
+open but name nothing with a URI: at most three stars. After it, they are four-star RDF, through four changes.
+\emph{Every thing gets an HTTP IRI}: the player, the district, the province,
+both clubs and even the loan spell, \term{vres:Nguyễn\_Công\_Phượng\_\_3}.
+\emph{Values become typed literals} (\term{xsd:date}, \term{xsd:gYear},
+\term{xsd:nonNegativeInteger}, \term{xsd:double}, \term{xsd:boolean}) and texts
+carry a language tag. \emph{Markup is interpreted}: templates such as
+\term{ngày sinh và tuổi} (date of birth and age) become values, links are
+resolved through redirects, the loan marker \term{→ … (mượn)} becomes
+\term{vio:onLoan true}, and \term{PRECEDENCE} takes the height of 1.68\,m from
+Wikidata over the infobox's 1.69\,m. \emph{Terms come from shared
+vocabularies}: \term{vio:} terms specialise \term{dbo:} terms, and the core
+datasets use \term{rdfs:}, \term{skos:}, \term{foaf:}, \term{dct:} and
+\term{prov:}.
+\begin{listing}[t]
+\begin{Verbatim}
+{{Thông tin tiểu sử bóng đá
+| birth_date  = {{ngày sinh và tuổi|1995|1|21}}<ref name=a/>
+| birth_place = [[Đô Lương (huyện)|Đô Lương]], [[Nghệ An]], [[Việt Nam]]
+| height      = {{convert|1,69|m}}
+| currentclub = [[Câu lạc bộ bóng đá Thành phố Đồng Nai|Thành phố Đồng Nai]]
+| clubnumber  = 10
+| years2 = 2016   | clubs2 = → [[Mito HollyHock]] (mượn)   | caps2 = 5   | goals2 = 0
+\end{Verbatim}
+\vspace{-0.4em}
+\begin{center}\footnotesize $\Downarrow$ \quad \texttt{python -m vidbpedia build}\end{center}
+\vspace{-0.6em}
+\begin{Verbatim}
+vres:Nguyễn_Công_Phượng a vio:FootballPlayer ;
+    vio:birthDate "1995-01-21"^^xsd:date ;
+    vio:birthPlace vres:Đô_Lương_\(huyện\) ;
+    vio:birthProvince vres:Nghệ_An ;                   # Wikidata P19, then P131*
+    vio:height 1.68e+00 ;                              # xsd:double, from Wikidata
+    vio:currentClub vres:Câu_lạc_bộ_bóng_đá_Thành_phố_Đồng_Nai ;
+    vio:shirtNumber "10"^^xsd:nonNegativeInteger ;
+    vio:careerStation vres:Nguyễn_Công_Phượng__3 .
+vres:Nguyễn_Công_Phượng__3 a vio:ClubStation ;
+    vio:team vres:Mito_HollyHock ;  vio:onLoan true ;
+    vio:startYear "2016"^^xsd:gYear ;  vio:endYear "2016"^^xsd:gYear ;
+    vio:appearances "5"^^xsd:nonNegativeInteger ;  vio:goals "0"^^xsd:nonNegativeInteger .
+\end{Verbatim}
+\caption{From three to four stars: part of the infobox of Nguyễn Công Phượng
+(top, wikitext) and the triples the build produces for it (bottom, Turtle,
+excerpt).}
+\label{lst:fourstar}
+\end{listing}
+
+% =========================================================================
+\subsection{Interlinking}
+\label{sec:interlinking}
+
+The English link of an entity comes from its Wikidata item: if the item has an
+English sitelink, the resource receives \term{owl:sameAs} to the \term{dbr:}
+resource of that title, written in the same Unicode IRI form that DBpedia
+uses. Using the sitelink of the same item avoids matching by label, which
+would be ambiguous for common Vietnamese names. Every entity also receives
+\term{owl:sameAs} to its Wikidata item. In addition to these instance links, the ontology is linked
+to DBpedia at the schema level through its subclass and sub-property axioms.
+
+The dataset describes itself with VoID~\cite{alexander2011void}: a
+\term{void:Dataset} with the licence (CC~BY-SA~4.0, as Wikipedia), sources, URI
+space, vocabularies and dump location; three subsets by provenance (ontology,
+asserted, inferred) with their triple counts; a class partition for each of the
+seven entity classes; and two \term{void:Linkset}s, to DBpedia and to Wikidata,
+with the number of links.
+
+% =========================================================================
+\subsection{Validation, Reasoning and Export}
+\label{sec:postprocess}
+
+\paragraph{Validation.} \term{postprocess} runs eight checks before reasoning
+(Table~\ref{tab:checks}). Each reports issues with severity, subject and
+detail; the tests run the same functions, and with
+\term{-{}-strict} any error stops the build.
+
+\begin{table}[t]
+\centering
+\caption{Quality checks (\term{kg/validation.py}). The last build reports no
+error and no warning.}
+\label{tab:checks}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Check & Condition \\
+\midrule
+\term{tbox} & sub-properties link properties of the same kind; every \term{vio:} class has a \term{dbo:} ancestor; terms used in axioms are declared; declared terms have vi and en labels and \term{rdfs:isDefinedBy}; \term{vio:} names are CamelCase \\
+\term{property\_kinds} & object properties point to IRIs, datatype properties to literals \\
+\term{datatype\_ranges} & literals match the declared \term{rdfs:range} (including \term{rdf:langString}) and are well-formed \\
+\term{required} & every entity has exactly one main class, a Vietnamese label, a source page and a Wikidata link \\
+\term{functional} & functional properties have at most one value \\
+\term{object\_ranges} & if the target of an object property has a class, that class fits the range \\
+\term{sameas} & no list or disambiguation targets; no two resources share a target \\
+\term{plausibility} & coordinates inside Vietnam; birth year, capacity, population and height in a plausible range (warnings) \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\paragraph{Reasoning.}
+\label{sec:reasoning}
+Reasoning uses the OWL~2~RL rules of the \term{owlrl}
+library~\cite{motik2012owl2profiles, rdflib} and runs in 35\,s. Three choices
+keep it fast and correct. Functional-property, cardinality and
+\term{owl:sameAs} axioms are removed from the TBox, because OWL~2~RL would
+otherwise derive \term{x owl:sameAs x} for every node and merge entities that
+share a functional value; functional properties are checked by validation
+instead. Only the \emph{skeleton} of the data reaches the reasoner, the
+\term{rdf:type} triples and the \term{vio:} triples of \term{vres:} resources,
+since abstracts, images and raw infobox triples cannot trigger any rule. Only
+new triples whose class or property is in \term{vio:}, \term{dbo:} or
+\term{wgs84:} are kept, never \term{owl:sameAs}, and they are written to their
+own file, \term{inferred.nt}, so the interface can label each triple as
+asserted or inferred.
+Reasoning also helped us find two modelling errors. First, it reported a
+violation of the disjointness between clubs and national teams. The cause was
+that \term{vio:ground}, \term{vio:manager} and \term{vio:chairman} had the
+domain \term{FootballClub}, so every national team with a home ground was
+inferred to be a club; the domain is now \term{Organisation}. Second, the
+question ``which clubs have their home ground in Hà Nội'' returned clubs from
+Đà Nẵng and Khánh Hòa. The cause was an axiom declaring \term{vio:tenant} the
+inverse of \term{vio:ground}, while the ``tenants'' field of the Hàng Đẫy
+stadium lists every team that ever played there. We removed the axiom, as
+DBpedia also keeps \term{dbo:tenant} and \term{dbo:ground} separate, and kept
+only tenants that are entities of the dataset. Figure~\ref{fig:example} shows
+asserted and inferred triples around one player.
+
+\paragraph{Export.} The full dataset (ontology, asserted and inferred triples,
+VoID) is written as Turtle and N-Triples, and as RDF/XML with
+\term{-{}-rdfxml}; the three parts are also written separately. The N-Triples
+file is read back and its triple count compared with the graph in memory, and
+statistics and the validation report are written as JSON.
+
+\begin{figure}[t]
+\centering
+\begin{adjustbox}{max width=\textwidth}
+\input{figures/entity_graph}
+\end{adjustbox}
+\caption{Nguyễn Công Phượng and one of his eleven career stations as an RDF graph,
+drawn as in the lectures: ellipses are resources (entities and classes), rectangles
+are literals, and each edge is one triple labelled with its property. Gray and
+black edges are asserted. Orange dashed edges are inferred by OWL~2~RL:
+\term{vio:playedFor} through the property chain, \term{dbo:SoccerPlayer} through the
+subclass axioms, and the class of Mito HollyHock through the $\forall$ restriction of
+\term{vio:ClubStation}. Blue edges are \term{owl:sameAs} links to other datasets.
+\term{vres:…\_\_3} is \term{vres:Nguyễn\_Công\_Phượng\_\_3}, the loan spell of
+Listing~\ref{lst:fourstar}.}
+\label{fig:example}
+\end{figure}

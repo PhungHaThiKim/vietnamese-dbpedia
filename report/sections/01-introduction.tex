@@ -1,0 +1,77 @@
+\section{Introduction}
+
+DBpedia extracts structured information from Wikipedia---infobox fields,
+abstracts, categories, redirects and links between articles---and publishes it
+as RDF, so that the content of an encyclopedia can be queried with SPARQL and
+joined with other datasets~\cite{auer2007dbpedia, lehmann2015dbpedia}. The
+English edition sits at the centre of the Linked Open Data cloud, and language
+chapters publish the same kind of data for other Wikipedia
+editions~\cite{kontokostas2012greek}. Vietnamese Wikipedia articles carry the
+same semi-structured information: the infobox of a footballer lists his date of
+birth, birthplace and every club he played for, season by season, but as
+wikitext it cannot be queried. A question such as \emph{``Which players born in
+Nghệ An have played for the national team, and for which club do they play
+now?''} requires reading and joining several articles by hand.
+
+This project addresses Topic~2 of the course, \emph{Build a DBpedia version for
+Vietnamese language}, which consists of five tasks: (1)~define an ontology;
+(2)~collect Vietnamese articles from Wikipedia; (3)~transform the data into
+4-star Linked Data; (4)~establish links to the English DBpedia; and
+(5)~provide an interface to query the data through a SPARQL endpoint or
+terminal.
+
+Rather than extracting all of Vietnamese Wikipedia shallowly, we extracted a
+closed domain in depth: Vietnamese \emph{football} (players, clubs, national
+teams, stadiums), \emph{provinces} and \emph{universities}. Its entities refer
+to one another, so the graph supports multi-hop questions: player
+$\rightarrow$ career station $\rightarrow$ club $\rightarrow$ home stadium
+$\rightarrow$ province, player $\rightarrow$ birth province, university
+$\rightarrow$ province. 777 of the 990 selected entities (78\%) have an English
+Wikipedia article to link to, and 956 of the 990 articles (97\%) contain an
+infobox, the main source that DBpedia extracts. Entities are selected through
+Wikidata rather than through the category tree of Vietnamese Wikipedia, whose
+categories editors assign inconsistently.
+
+The contributions of this work are:
+\begin{itemize}
+  \item an OWL ontology, \term{vio:}, with 18 classes and 54 properties, aligned
+        to the DBpedia Ontology for OWL~2~RL reasoning (Section~\ref{sec:ontology});
+  \item a reproducible pipeline whose raw downloads are committed, so the
+        dataset rebuilds offline (Sections~\ref{sec:collection}--\ref{sec:postprocess});
+  \item 131{,}543 triples (88{,}898 asserted, 41{,}730 inferred) that pass eight
+        quality checks with no error or warning (Section~\ref{sec:evaluation});
+  \item 777 \term{owl:sameAs} links to English DBpedia, verified on the live
+        endpoint, and 990 to Wikidata (Sections~\ref{sec:interlinking} and~\ref{sec:links});
+  \item a server with a SPARQL~1.1 Protocol endpoint, IRIs dereferenced with 303
+        and content negotiation, a terminal client, and a web interface with
+        entity pages, an ontology browser, a SPARQL editor and step-by-step
+        question answering (Section~\ref{sec:publishing}).
+\end{itemize}
+
+Table~\ref{tab:requirements} maps each task to its implementation; the following
+sections cover background, design, publishing, evaluation and discussion.
+
+\begin{table}[t]
+\centering
+\caption{Where each task of the assignment is implemented. Paths are under
+\term{vidbpedia/}, except \term{ui/}.}
+\label{tab:requirements}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+Task & Implementation & Output & Section \\
+\midrule
+1. Ontology & \term{ontology/*.ttl}, merged by \term{kg/ontology.py}
+  & 18 classes, 54 properties, 859 triples & \ref{sec:ontology} \\
+2. Collect articles & \term{crawl/wikidata\_seeds.py}, \term{crawl/wiki\_enrich.py}
+  & 990 entities with their Vietnamese articles & \ref{sec:collection} \\
+3. 4-star data & \term{crawl/build\_rdf.py}, \term{kg/postprocess.py}
+  & 131{,}543 triples in Turtle and N-Triples & \ref{sec:transform}, \ref{sec:postprocess} \\
+4. Link to DBpedia & enwiki sitelinks of the Wikidata item
+  & 777 \term{owl:sameAs dbr:} links, VoID linksets & \ref{sec:interlinking} \\
+5. Query interface & \term{web/}: endpoint, Linked Data, Gradio; \term{ui/}: React; \term{kg/query.py}
+  & \term{/sparql} endpoint, \term{query} command, Linked Data routes, web interface
+  & \ref{sec:endpoint}, \ref{sec:deref}, \ref{sec:ui} \\
+\bottomrule
+\end{tabularx}
+\end{table}

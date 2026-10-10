@@ -1,0 +1,48 @@
+% Một thực thể dưới dạng đồ thị RDF theo ký hiệu bài giảng (02_RDF tr.10-14, 04_LOD tr.37):
+% elip = tài nguyên (cá thể, lớp), chữ nhật = literal, mỗi cạnh là một triple ghi qname.
+% Sinh từ entity_graph_spec.py; slide 10 của bản editable dùng cùng toạ độ.
+\begin{tikzpicture}[
+    font=\fontsize{7}{8.5}\selectfont, >={Stealth[length=1.7mm]},
+    base/.style={inner sep=1.2pt, font=\fontsize{7}{8.5}\selectfont\ttfamily},
+    inst/.style={base, ellipse, draw=rdfsdraw, fill=rdfsfill, minimum height=0.7cm},
+    cls/.style={base, ellipse, draw=black!80, fill=white, minimum height=0.7cm},
+    dbocls/.style={cls, dashed, draw=black!55, text=black!70},
+    lod/.style={base, ellipse, draw=accblue, dashed, text=accblue!80!black, minimum height=0.7cm},
+    lit/.style={base, rectangle, draw=black!70, fill=black!4, minimum height=0.5cm, inner xsep=3pt},
+    e/.style={->, black!80},
+    typ/.style={->, black!45},
+    inf/.style={->, rdfsaxiom, dashed, thick},
+    same/.style={->, accblue, thick},
+    lbl/.style={font=\fontsize{5.5}{6.5}\selectfont\itshape, fill=white, inner sep=0.8pt},
+  ]
+  \node[inst] (cp) at (2.0,0.0) {vres:Nguyễn\_Công\_Phượng};
+  \node[inst] (s3) at (7.4,0.0) {vres:…\_\_3};
+  \node[inst] (mito) at (11.6,0.0) {vres:Mito\_HollyHock};
+  \node[cls] (fp) at (0.0,2.3) {vio:FootballPlayer};
+  \node[dbocls] (sp) at (3.9,2.3) {dbo:SoccerPlayer};
+  \node[cls] (cstat) at (7.4,2.3) {vio:ClubStation};
+  \node[cls] (fc) at (11.6,2.3) {vio:FootballClub};
+  \node[lit] (lbl) at (-3.0,0.55) {"Nguyễn Công Phượng"@vi};
+  \node[lit] (bd) at (-3.0,-0.55) {"1995-01-21"\textasciicircum{}\textasciicircum{}xsd:date};
+  \node[inst] (na) at (-2.6,-2.3) {vres:Nghệ\_An};
+  \node[lod] (dbr) at (1.6,-2.3) {dbr:Nguyễn\_Công\_Phượng};
+  \node[lod] (wd) at (5.6,-2.3) {wd:Q18045362};
+  \node[lit] (sy) at (6.4,-1.45) {"2016"\textasciicircum{}\textasciicircum{}xsd:gYear};
+  \node[lit] (ol) at (9.9,-1.3) {true};
+  \node[lit] (ap) at (9.4,-2.45) {"5"\textasciicircum{}\textasciicircum{}xsd:nonNegativeInteger};
+  \draw[typ] (cp) -- node[lbl] {rdf:type} (fp);
+  \draw[inf] (cp) -- node[lbl, text=rdfsaxiom] {rdf:type} (sp);
+  \draw[typ] (s3) -- node[lbl] {rdf:type} (cstat);
+  \draw[inf] (mito) -- node[lbl, text=rdfsaxiom] {rdf:type} (fc);
+  \draw[e] (cp) -- node[lbl] {vio:careerStation} (s3);
+  \draw[e] (s3) -- node[lbl] {vio:team} (mito);
+  \draw[inf] (cp.north east) -- ++(0,1.15) -| node[lbl, text=rdfsaxiom, pos=0.22] {vio:playedFor} (mito.north west);
+  \draw[e] (cp) -- node[lbl] {rdfs:label} (lbl);
+  \draw[e] (cp) -- node[lbl] {vio:birthDate} (bd);
+  \draw[e] (cp) -- node[lbl] {vio:birthProvince} (na);
+  \draw[same] (cp) -- node[lbl, text=accblue] {owl:sameAs} (dbr);
+  \draw[same] (cp) -- node[lbl, text=accblue] {owl:sameAs} (wd);
+  \draw[e] (s3) -- node[lbl] {vio:startYear} (sy);
+  \draw[e] (s3) -- node[lbl] {vio:onLoan} (ol);
+  \draw[e] (s3) -- node[lbl] {vio:appearances} (ap);
+\end{tikzpicture}

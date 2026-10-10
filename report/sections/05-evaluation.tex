@@ -1,0 +1,188 @@
+\section{Evaluation}
+\label{sec:evaluation}
+
+All figures in this section are computed from the published dataset by
+\term{report/report\_numbers.py}.
+
+\subsection{Dataset and Coverage}
+\label{sec:stats}
+
+The dataset contains 131{,}543 triples: 88{,}898 asserted, 41{,}730 inferred,
+859 in the ontology and 56 in the VoID description. They describe 990
+entities, 3{,}382 career stations (527 youth, 1{,}966 club and 889
+national-team stations), 1{,}154 categories and 1{,}274 redirects, for 8{,}624
+distinct resource IRIs in total. 1{,}382 of these resources have a label but
+no class. They are targets of links in infobox values, such as cities,
+districts, people and competitions. Table~\ref{tab:coverage}
+shows the coverage by class.
+
+\begin{table}[t]
+\centering
+\caption{Entities by class, articles with an infobox, and entities linked to
+English DBpedia.}
+\label{tab:coverage}
+\small
+\begin{tabular}{@{}lrrr@{}}
+\toprule
+Class & Entities & With infobox & Linked to DBpedia \\
+\midrule
+Football players       & 611 & 602 & 508 \\
+Football clubs         & 61  & 59  & 60 \\
+National teams         & 10  & 5   & 10 \\
+Stadiums               & 29  & 29  & 25 \\
+Universities           & 168 & 159 & 89 \\
+Provinces (34 current) & 110 & 101 & 84 \\
+Country                & 1   & 1   & 1 \\
+\midrule
+Total                  & 990 & 956 (97\%) & 777 (78\%) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+Infobox coverage is high for every class except national teams, whose
+Vietnamese articles often lack an infobox. Links to English DBpedia are
+complete for clubs and national teams but cover about half of the
+universities, many of which have no English article. Player properties are well
+covered: position for 586 of 611 players, birth date for 572, height for 534,
+birth province for 462 and current club for 442; 56 of 61 clubs have a home
+ground and 142 of 168 universities a province. 129 of the 3{,}382 career
+stations (3.8\%) have no \term{vio:team}, because the team is plain text in the
+infobox or its link was rejected by the class filter.
+
+\subsection{Effect of Reasoning}
+\label{sec:reasoning-eval}
+
+Table~\ref{tab:reasoning} compares queries on the asserted data alone with the
+same queries on the published dataset. Of the 41{,}730 inferred triples,
+18{,}341 are types and 23{,}389 are property values. Without reasoning, none of
+the DBpedia classes or properties has an instance: the data uses only the
+\term{vio:} vocabulary. After reasoning, a client that knows only DBpedia can
+ask for \term{dbo:SoccerPlayer} or \term{dbo:team} and get answers. The 48
+people who are not players (coaches, chairmen and rectors) receive
+\term{dbo:Person} from the range of the property that links to them. The
+property chain turns a two-step path through career stations into 2{,}772
+direct \term{vio:playedFor} edges. The class counts of Table~\ref{tab:classes}
+show the effect of the restrictions: 486 players become
+\term{vio:NationalTeamPlayer}, and 154 clubs that are not seeds, such as
+Mito HollyHock, become \term{vio:FootballClub} because they are the team of a
+club station.
+
+\begin{table}[t]
+\centering
+\caption{Answers to the same query on the asserted data alone and on the
+published dataset (asserted plus inferred).}
+\label{tab:reasoning}
+\small
+\begin{adjustbox}{max width=\textwidth}
+\begin{tabular}{@{}lrrl@{}}
+\toprule
+Query pattern & Asserted & Published & Inferred through \\
+\midrule
+\term{?x a dbo:Person}           & 0 & 659     & subclass, \term{rdfs:range} \\
+\term{?x a dbo:SoccerPlayer}     & 0 & 611     & \term{vio:FootballPlayer} $\sqsubseteq$ \term{dbo:SoccerPlayer} \\
+\term{?x a dbo:Organisation}     & 0 & 410     & subclass \\
+\term{?x a dbo:Place}            & 0 & 370     & subclass, \term{rdfs:range} \\
+\term{?x vio:playedFor ?t}       & 0 & 2{,}772 & chain \term{careerStation} $\circ$ \term{team} \\
+\term{?t vio:hasPlayer ?x}       & 0 & 2{,}772 & \term{owl:inverseOf} \\
+\term{?x dbo:team ?t}            & 0 & 3{,}699 & sub-property \\
+\term{?x dbo:birthPlace ?p}      & 0 & 802     & sub-property \\
+\bottomrule
+\end{tabular}
+\end{adjustbox}
+\end{table}
+
+\subsection{Quality and Tests}
+\label{sec:quality}
+
+The eight checks of Table~\ref{tab:checks} report no error and no warning on
+the last build. The test suite has 62 tests and passes in about 25\,s: 12
+competency questions on the real data (Section~\ref{sec:cq}); 5 quality tests,
+including the ontology conventions; 4 reasoning tests on small graphs; 6 parser
+tests; 5 question-answering tests with a stubbed model; 19 tests of the Linked
+Data routes, resource page and resource tree; and 11 tests of the endpoint and
+terminal client, including the rejection of updates, \term{FROM} and
+\term{SERVICE}. The interface adds 90 tests on the same data. Tests use lower
+bounds instead of exact counts, so they keep passing after a new crawl.
+
+\subsection{Links to English DBpedia}
+\label{sec:links}
+
+We sent every \term{dbr:} target to the public DBpedia SPARQL endpoint and
+checked whether it describes an article, a redirect or nothing
+(Table~\ref{tab:links}). 733 of the 777 links (94.3\%) point to an article,
+which also confirms that DBpedia uses the same Unicode IRIs as we do. Twelve
+point to a redirect (for example \term{dbr:Quảng\_Ninh}) and 32 to titles that
+DBpedia does not contain, half of them clubs with recent titles such as
+\term{dbr:Ho\_Chi\_Minh\_City\_FC\_(2025)}: our links come from today's English
+Wikipedia, while DBpedia was extracted from an older snapshot.
+
+\begin{table}[t]
+\centering
+\caption{\term{owl:sameAs} targets in English DBpedia, checked against
+\term{dbpedia.org/sparql} on 7 October 2026.}
+\label{tab:links}
+\small
+\begin{tabular}{@{}lrr@{}}
+\toprule
+Status of the \term{dbr:} target & Links & Share \\
+\midrule
+Article                                 & 733 & 94.3\% \\
+Redirect (\term{dbo:wikiPageRedirects}) & 12  & 1.5\% \\
+Not in DBpedia                          & 32  & 4.1\% \\
+\midrule
+Total                                   & 777 & 100\% \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Competency Questions}
+\label{sec:cq}
+
+Table~\ref{tab:cq} lists competency questions that guided the ontology, with
+the answers that the graph returns. Each question is a test in
+\term{tests/test\_sparql.py}, and most need several hops or an inferred triple.
+
+\begin{table}[t]
+\centering
+\caption{Competency questions and the answers returned by the graph.}
+\label{tab:cq}
+\small
+\begin{tabularx}{\textwidth}{@{}>{\raggedright\arraybackslash}X>{\raggedright\arraybackslash}Xl@{}}
+\toprule
+Question & Answer & Relies on \\
+\midrule
+How many provinces and centrally governed cities are there now? & 34 (of 110 provinces, 76 are former) & \term{vio:FormerProvince} \\
+Which unit succeeded the former province of Hà Tây? & Hà Nội & \term{vio:successor} \\
+Which teams has Nguyễn Công Phượng played for? & 11 teams over 11 stations, 7 of them at clubs & property chain \\
+Which provinces are home to the most players? & Nghệ An 58, Hà Nội 48, Thanh Hóa 42 & \term{vio:birthProvince} \\
+How many universities are in Hà Nội? & 54 & \term{vio:province} \\
+How many clubs have a home ground in a known province? & 44 & club $\rightarrow$ stadium $\rightarrow$ province \\
+Which entity is meant by ``Công Phượng''? & Nguyễn Công Phượng & \term{dbo:wikiPageRedirects} \\
+Which entities are DBpedia soccer players? & 611 & subclass reasoning \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+\subsection{Five-Star Assessment}
+\label{sec:stars}
+
+Table~\ref{tab:stars} assesses the dataset against the five-star
+scheme~\cite{bernerslee2006linked}.
+
+\begin{table}[t]
+\centering
+\caption{The dataset against the five-star scheme.}
+\label{tab:stars}
+\small
+\begin{tabularx}{\textwidth}{@{}l>{\raggedright\arraybackslash}X@{}}
+\toprule
+Star & Evidence \\
+\midrule
+$\star$ open licence on the web & CC~BY-SA~4.0, declared in the VoID description and the ontology header; dumps published in a Git repository \\
+$\star\star$ machine-readable & RDF triples, not text or tables \\
+$\star\star\star$ open formats & Turtle and N-Triples dumps; each resource also as JSON-LD and RDF/XML; query results in the SPARQL JSON, XML and CSV formats \\
+$\star\star\star\star$ URIs for things & an HTTP IRI for every entity, career station, category and redirect; dereferenced with 303 and content negotiation by the project server (Section~\ref{sec:deref}) \\
+$\star\star\star\star\star$ linked & 777 \term{owl:sameAs} links to English DBpedia, 990 to Wikidata, described as VoID linksets; classes and properties aligned to \term{dbo:} \\
+\bottomrule
+\end{tabularx}
+\end{table}
